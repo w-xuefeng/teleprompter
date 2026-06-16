@@ -1221,10 +1221,16 @@
           fontSizeInput.value = fontSize;
           return;
         }
+        const savedProgress = positionToProgress();
         fontSize = newSize;
         fontSizeInput.value = fontSize;
         applyStyles();
-        measureAndResetPosition();
+        // Re-measure then restore proportional position
+        displayContent.style.transform = '';
+        displayContent.offsetHeight;
+        position = progressToPosition(savedProgress);
+        applyTransform();
+        updateProgressSlider();
       }
 
       function onFontSizeInput() {
