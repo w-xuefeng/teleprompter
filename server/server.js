@@ -26,7 +26,7 @@ const server = createServer((req, res) => {
   res.end();
 });
 
-const wss = new WebSocketServer({ server });
+const wss = new WebSocketServer({ server, pingInterval: 25000 });
 
 function generateId() {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -73,9 +73,21 @@ wss.on('connection', ws => {
           }),
         );
 
+        // Notify new client about existing peers
+        const room = rooms.get(roomName);
+        room.forEach(info => {
+          if (info.ws !== ws) {
+            ws.send(JSON.stringify({ type: 'peer-joined', role: info.role }));
+          }
+        });
+
         broadcast(roomName, { type: 'peer-joined', role: clientRole }, ws);
         break;
       }
+
+      case 'ping':
+        ws.send(JSON.stringify({ type: 'pong' }));
+        break;
 
       case 'command':
       case 'sync':

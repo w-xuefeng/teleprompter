@@ -831,6 +831,7 @@
       // ── State ─────────────────────────────────────
       let ws = null;
       let connected = false;
+      let heartbeatTimer = null;
       let currentState = {
         isPlaying: false,
         direction: 'bottom-up',
@@ -895,6 +896,11 @@
             room: room,
             role: 'remote'
           }));
+          heartbeatTimer = setInterval(function() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify({ type: 'ping' }));
+            }
+          }, 25000);
         };
 
         ws.onmessage = function(e) {
@@ -902,6 +908,8 @@
         };
 
         ws.onclose = function() {
+          clearInterval(heartbeatTimer);
+          heartbeatTimer = null;
           if (connected) {
             onDisconnected();
           } else if (!connectFailed) {
@@ -913,6 +921,8 @@
         };
 
         ws.onerror = function() {
+          clearInterval(heartbeatTimer);
+          heartbeatTimer = null;
           connectFailed = true;
           ws = null;
           btnConnect.textContent = '连接';
@@ -933,12 +943,14 @@
         controlScreen.classList.add('active');
         roomDisplay.textContent = room;
         disconnectedOverlay.classList.remove('show');
-        document.getElementById('status-text').textContent = '已连接';
+        document.getElementById('status-text').textContent = '已连接服务器，等待主机配对';
         document.getElementById('status-dot').style.background = '';
         safeCreateIcons();
       }
 
       function disconnect() {
+        clearInterval(heartbeatTimer);
+        heartbeatTimer = null;
         if (ws) {
           ws.close();
           ws = null;
@@ -974,12 +986,17 @@
             onJoined(msg.room);
             break;
 
-          case 'state':
-            applyState(msg.state);
+          case 'peer-joined':
+            document.getElementById('status-text').textContent = '主机已配对';
+            document.getElementById('status-dot').style.background = 'var(--c-success)';
             break;
 
           case 'peer-left':
             onDisconnected();
+            break;
+
+          case 'state':
+            applyState(msg.state);
             break;
         }
       }
@@ -1166,7 +1183,15 @@
       });
     }
     document.getElementById('toast-refresh-btn').addEventListener('click', function() {
-      window.location.reload();
+      if (typeof caches !== 'undefined') {
+        caches.keys().then(function(names) {
+          return Promise.all(names.map(function(n) { return caches.delete(n); }));
+        }).finally(function() {
+          window.location.reload();
+        });
+      } else {
+        window.location.reload();
+      }
     });
   </script>
 </body>

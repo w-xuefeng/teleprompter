@@ -832,7 +832,12 @@
       transition: background var(--transition);
     }
 
-    .remote-btn.connected .status-dot {
+    .remote-btn.waiting .status-dot {
+      background: #0078d4;
+      box-shadow: 0 0 5px rgba(0, 120, 212, 0.5);
+    }
+
+    .remote-btn.paired .status-dot {
       background: #22c55e;
       box-shadow: 0 0 5px rgba(34, 197, 94, 0.5);
     }
@@ -994,6 +999,10 @@
 
     .modal .status-text.error {
       color: #ef4444;
+    }
+
+    .modal .status-text.warning {
+      color: #f59e0b;
     }
 
     .modal .btn-refresh {
@@ -1271,7 +1280,12 @@
       });
     }
     document.getElementById('toast-refresh-btn').addEventListener('click', () => {
-      window.location.reload();
+      if (typeof caches !== 'undefined') {
+        caches.keys().then(names => Promise.all(names.map(n => caches.delete(n))))
+          .finally(() => { window.location.reload(); });
+      } else {
+        window.location.reload();
+      }
     });
   </script>
 
@@ -1991,7 +2005,9 @@
 
       let remoteWs = null;
       let remoteConnected = false;
+      let remotePaired = false;
       let remoteRoomCode = '';
+      let heartbeatTimer = null;
 
       function getRemoteServer() {
         return localStorage.getItem(REMOTE_SERVER_KEY) || '';
@@ -2044,7 +2060,7 @@
       function connectRemote() {
         let server = document.getElementById('remote-server').value.trim();
         if (!server) {
-          updateRemoteStatus('请输入服务器地址', true);
+          updateRemoteStatus('请输入服务器地址', 'error');
           return;
         }
         server = server.replace(/^https?:\/\//, '').replace(/\/$/, '');
@@ -2066,7 +2082,7 @@
         try {
           remoteWs = new WebSocket(url);
         } catch (e) {
-          updateRemoteStatus('无法连接 ' + server + ' — 请检查地址格式是否正确', true);
+          updateRemoteStatus('无法连接 ' + server + ' — 请检查地址格式是否正确', 'error');
           return;
         }
 
@@ -2074,7 +2090,7 @@
           if (remoteWs && remoteWs.readyState === WebSocket.CONNECTING) {
             connectError = true;
             remoteWs.close();
-            updateRemoteStatus('连接超时 — 请确认 ' + server + ' 上的服务器是否已启动', true);
+            updateRemoteStatus('连接超时 — 请确认 ' + server + ' 上的服务器是否已启动', 'error');
           }
         }, 10000);
 
@@ -2085,6 +2101,11 @@
             room: remoteRoomCode,
             role: 'host'
           }));
+          heartbeatTimer = setInterval(function() {
+            if (remoteWs && remoteWs.readyState === WebSocket.OPEN) {
+              remoteWs.send(JSON.stringify({ type: 'ping' }));
+            }
+          }, 25000);
         };
 
         remoteWs.onmessage = function(e) {
@@ -2093,12 +2114,15 @@
 
         remoteWs.onclose = function(e) {
           clearTimeout(connectTimeout);
+          clearInterval(heartbeatTimer);
+          heartbeatTimer = null;
           remoteConnected = false;
+          remotePaired = false;
           if (!connectError) {
             if (e.code === 1006) {
-              updateRemoteStatus('无法连接 ' + server + ' — 请确认服务器地址和端口是否正确', true);
+              updateRemoteStatus('无法连接 ' + server + ' — 请确认服务器地址和端口是否正确', 'error');
             } else {
-              updateRemoteStatus('已断开');
+              updateRemoteStatus('已断开', 'warning');
             }
           }
           updateRemoteUI();
@@ -2106,17 +2130,24 @@
 
         remoteWs.onerror = function() {
           clearTimeout(connectTimeout);
+          clearInterval(heartbeatTimer);
+          heartbeatTimer = null;
+          remoteConnected = false;
+          remotePaired = false;
           connectError = true;
-          updateRemoteStatus('无法连接 ' + server + ' — 请确认服务器地址和端口是否正确', true);
+          updateRemoteStatus('无法连接 ' + server + ' — 请确认服务器地址和端口是否正确', 'error');
         };
       }
 
       function disconnectRemote() {
+        clearInterval(heartbeatTimer);
+        heartbeatTimer = null;
         if (remoteWs) {
           remoteWs.close();
           remoteWs = null;
         }
         remoteConnected = false;
+        remotePaired = false;
         updateRemoteUI();
         updateRemoteStatus('未连接');
       }
@@ -2125,14 +2156,22 @@
         switch (msg.type) {
           case 'joined':
             remoteConnected = true;
-            updateRemoteStatus('已连接');
+            remotePaired = false;
+            updateRemoteStatus('已连接到服务器，等待遥控器配对');
             updateRemoteUI();
             syncStateToRemote();
             break;
           case 'peer-joined':
+            remotePaired = true;
+            updateRemoteStatus('遥控器已配对', 'success');
+            updateRemoteUI();
             syncStateToRemote();
+            setTimeout(hideRemoteModal, 1000);
             break;
           case 'peer-left':
+            remotePaired = false;
+            updateRemoteStatus('遥控器已断开', 'warning');
+            updateRemoteUI();
             break;
           case 'command':
             executeRemoteCommand(msg.action, msg.value);
@@ -2200,12 +2239,13 @@
         }
       }
 
-      function updateRemoteStatus(text, isError) {
+      function updateRemoteStatus(text, level) {
         const el = document.getElementById('remote-status');
         if (!el) return;
         el.textContent = text;
-        el.classList.toggle('connected', text === '已连接');
-        el.classList.toggle('error', !!isError);
+        el.classList.toggle('connected', level === 'success');
+        el.classList.toggle('warning', level === 'warning');
+        el.classList.toggle('error', level === 'error');
       }
 
       function updateRemoteUI() {
@@ -2213,14 +2253,24 @@
         const btnDisconnect = document.getElementById('btn-remote-disconnect');
         const btnRemote = document.getElementById('btn-remote');
 
+        if (btnRemote) {
+          btnRemote.classList.remove('waiting', 'paired');
+          if (remotePaired) {
+            btnRemote.classList.add('paired');
+            btnRemote.title = '远程控制 - 遥控器已配对';
+          } else if (remoteConnected) {
+            btnRemote.classList.add('waiting');
+            btnRemote.title = '远程控制 - 已连接服务器，等待配对';
+          } else {
+            btnRemote.title = '远程控制 - 未连接';
+          }
+        }
         if (remoteConnected) {
           if (btnConnect) btnConnect.style.display = 'none';
           if (btnDisconnect) btnDisconnect.style.display = '';
-          if (btnRemote) btnRemote.classList.add('connected');
         } else {
           if (btnConnect) btnConnect.style.display = '';
           if (btnDisconnect) btnDisconnect.style.display = 'none';
-          if (btnRemote) btnRemote.classList.remove('connected');
         }
       }
 
