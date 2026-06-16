@@ -1064,6 +1064,51 @@
       font-size: 13px;
       color: var(--c-text-muted);
     }
+
+    .update-toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(120px);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: var(--c-elevated);
+      border: 1px solid var(--c-accent);
+      border-radius: 12px;
+      padding: 14px 24px;
+      box-shadow: 0 8px 32px rgba(0, 240, 255, 0.15);
+      opacity: 0;
+      transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease;
+      pointer-events: none;
+    }
+    .update-toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .update-toast .toast-text {
+      color: var(--c-text);
+      font-size: 14px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .update-toast .toast-btn {
+      padding: 8px 20px;
+      border: none;
+      border-radius: 8px;
+      background: var(--c-accent);
+      color: #07080c;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+    .update-toast .toast-btn:hover {
+      background: var(--c-accent-hover);
+    }
   </style>
 </head>
 
@@ -1174,6 +1219,12 @@
     </div>
   </div>
 
+  <!-- Update available toast -->
+  <div class="update-toast" id="update-toast">
+    <span class="toast-text">有新版本可用</span>
+    <button class="toast-btn" id="toast-refresh-btn">刷新</button>
+  </div>
+
   <!-- Fullscreen request prompt -->
   <div class="fullscreen-prompt" id="fullscreen-prompt">
     <div class="fullscreen-prompt-card">
@@ -1208,10 +1259,20 @@
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
-          .then(reg => console.log('Service worker registered:', reg.scope))
+          .then(reg => {
+            console.log('Service worker registered:', reg.scope);
+            navigator.serviceWorker.addEventListener('message', (e) => {
+              if (e.data && e.data.type === 'update-available') {
+                document.getElementById('update-toast').classList.add('show');
+              }
+            });
+          })
           .catch(err => console.log('Service worker registration failed:', err));
       });
     }
+    document.getElementById('toast-refresh-btn').addEventListener('click', () => {
+      window.location.reload();
+    });
   </script>
 
   <script>
@@ -1981,11 +2042,12 @@
       }
 
       function connectRemote() {
-        const server = document.getElementById('remote-server').value.trim();
+        let server = document.getElementById('remote-server').value.trim();
         if (!server) {
           updateRemoteStatus('请输入服务器地址', true);
           return;
         }
+        server = server.replace(/^https?:\/\//, '').replace(/\/$/, '');
         setRemoteServer(server);
 
         let code = document.getElementById('remote-room-code').textContent.trim();
@@ -2188,8 +2250,8 @@
         document.documentElement.requestFullscreen();
       });
 
-      document.getElementById('remote-modal-overlay').addEventListener('click', function(e) {
-        if (e.target === this) hideRemoteModal();
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') hideRemoteModal();
       });
 
       document.getElementById('btn-remote-connect').addEventListener('click', connectRemote);

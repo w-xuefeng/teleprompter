@@ -606,6 +606,51 @@
         width: 100%;
       }
     }
+
+    .update-toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(120px);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: var(--c-elevated);
+      border: 1px solid var(--c-accent);
+      border-radius: 12px;
+      padding: 14px 24px;
+      box-shadow: 0 8px 32px rgba(0, 240, 255, 0.15);
+      opacity: 0;
+      transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease;
+      pointer-events: none;
+    }
+    .update-toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .update-toast .toast-text {
+      color: var(--c-text);
+      font-size: 14px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .update-toast .toast-btn {
+      padding: 8px 20px;
+      border: none;
+      border-radius: 8px;
+      background: var(--c-accent);
+      color: #07080c;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+    .update-toast .toast-btn:hover {
+      background: var(--c-accent-hover);
+    }
   </style>
 </head>
 
@@ -746,6 +791,12 @@
     </button>
   </div>
 
+  <!-- Update available toast -->
+  <div class="update-toast" id="update-toast">
+    <span class="toast-text">有新版本可用</span>
+    <button class="toast-btn" id="toast-refresh-btn">刷新</button>
+  </div>
+
   <script>
     (function() {
       const SERVER_KEY = 'trc_server_addr';
@@ -805,6 +856,7 @@
       // ── Connection ────────────────────────────────
       function connect() {
         var server = serverAddr.value.trim();
+        server = server.replace(/^https?:\/\//, '').replace(/\/$/, '');
         var room = roomInput.value.trim().toUpperCase();
 
         if (!server) {
@@ -1102,10 +1154,20 @@
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
         navigator.serviceWorker.register('./sw.js')
-          .then(function(reg) { console.log('SW registered:', reg.scope); })
+          .then(function(reg) {
+            console.log('SW registered:', reg.scope);
+            navigator.serviceWorker.addEventListener('message', function(e) {
+              if (e.data && e.data.type === 'update-available') {
+                document.getElementById('update-toast').classList.add('show');
+              }
+            });
+          })
           .catch(function(err) { console.log('SW registration failed:', err); });
       });
     }
+    document.getElementById('toast-refresh-btn').addEventListener('click', function() {
+      window.location.reload();
+    });
   </script>
 </body>
 
