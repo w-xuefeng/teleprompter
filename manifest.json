@@ -1,0 +1,18 @@
+{
+  "name": "Teleprompter - 提词器",
+  "short_name": "提词器",
+  "description": "一个高颜值、功能丰富的浏览器端提词器，支持多种滚动方向、速度调节、字体和背景自定义，以及预设管理。",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#07080c",
+  "theme_color": "#07080c",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

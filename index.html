@@ -4,31 +4,59 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Teleprompter - 一个高颜值、功能丰富的浏览器端提词器，支持多种滚动方向、速度调节、字体和背景自定义，以及预设管理。">
+  <meta name="description" content="Teleprompter - 一个高颜值、功能丰富的浏览器端提词器，支持多种滚动方向、速度调节、字体 and 背景自定义，以及预设管理。">
   <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <!-- PWA Manifest & iOS Support -->
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#07080c">
+  <link rel="apple-touch-icon" href="./icon.svg">
+  <!-- Google Fonts - Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <title>Teleprompter - 提词器</title>
   <script src="lucide-loader.js"></script>
   <style>
     :root {
-      --c-bg: #111118;
-      --c-surface: #18181f;
-      --c-elevated: #1e1e26;
-      --c-border: rgba(255,255,255,.06);
-      --c-border-hover: rgba(255,255,255,.12);
-      --c-text: #b4b4c0;
-      --c-text-muted: #88889a;
-      --c-accent: #6b8cff;
-      --c-accent-muted: rgba(107,140,255,.12);
-      --c-danger: #d46464;
-      --radius: 5px;
-      --transition: 0.18s ease;
+      --c-bg: #07080c;
+      --c-surface: rgba(13, 16, 24, 0.75);
+      --c-elevated: rgba(20, 24, 36, 0.85);
+      --c-border: rgba(255, 255, 255, 0.05);
+      --c-border-hover: rgba(0, 240, 255, 0.15);
+      --c-text: #e0e8f0;
+      --c-text-muted: #64748b;
+      --c-accent: #00f0ff;
+      --c-accent-glow: rgba(0, 240, 255, 0.25);
+      --c-accent-hover: #00c8d8;
+      --c-danger: #ff4d4d;
+      --radius: 6px;
+      --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.01);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--c-accent);
+      box-shadow: 0 0 6px var(--c-accent);
+    }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
-      background: var(--c-bg);
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: radial-gradient(circle at top right, rgba(0, 240, 255, 0.05), transparent 40%),
+                  radial-gradient(circle at bottom left, rgba(0, 240, 255, 0.02), transparent 45%),
+                  var(--c-bg);
       color: var(--c-text);
       height: 100vh;
       display: flex;
@@ -41,178 +69,344 @@
     .toolbar {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
-      padding: 8px 14px;
+      gap: 12px 20px;
+      padding: 10px 16px;
       background: var(--c-surface);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       border-bottom: 1px solid var(--c-border);
       align-items: center;
       z-index: 10;
       flex-shrink: 0;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .toolbar-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: nowrap;
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+      padding-right: 18px;
+    }
+
+    .toolbar-section:last-child {
+      border-right: none;
+      padding-right: 0;
+    }
+
+    /* Split button dropdown styling */
+    .dropdown-container {
+      position: relative;
+      display: inline-flex;
+      align-items: stretch;
+    }
+    
+    .dropdown-menu {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      background: var(--c-elevated);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+      min-width: 120px;
+      display: none;
+      flex-direction: column;
+      z-index: 100;
+      overflow: hidden;
+      padding: 4px 0;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    
+    .dropdown-menu.show {
+      display: flex;
+    }
+    
+    .dropdown-item {
+      padding: 6px 12px;
+      font-size: 12.5px;
+      color: var(--c-text);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background var(--transition);
+      user-select: none;
+    }
+    
+    .dropdown-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--c-accent);
+    }
+    
+    .dropdown-item.active {
+      color: var(--c-accent);
+      font-weight: 600;
+      background: rgba(0, 240, 255, 0.04);
     }
 
     .ctrl-group {
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.01);
+      padding: 4px 6px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      transition: all var(--transition);
+    }
+    .ctrl-group:focus-within {
+      border-color: rgba(0, 240, 255, 0.2);
+      background: rgba(255, 255, 255, 0.03);
     }
 
     .ctrl-label {
-      font-size: 10px;
-      font-weight: 500;
-      color: var(--c-text-muted);
-      letter-spacing: 0.3px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #94a3b8;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
       white-space: nowrap;
       user-select: none;
-    }
-
-    button {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 4px;
+    }
+    .ctrl-label svg {
+      width: 15px;
+      height: 15px;
+      color: #94a3b8;
+    }
+
+    button {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
       padding: 5px 10px;
-      border: 1px solid transparent;
+      border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: var(--radius);
-      background: transparent;
+      background: rgba(255, 255, 255, 0.02);
       color: var(--c-text);
       cursor: pointer;
-      font-size: 12px;
-      font-weight: 450;
-      transition: all var(--transition);
+      font-size: 12.5px;
+      font-weight: 500;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       white-space: nowrap;
       user-select: none;
       font-family: inherit;
     }
 
-    button:hover {
-      background: rgba(255,255,255,.04);
-      color: #fff;
+    button:disabled {
+      opacity: 0.35 !important;
+      cursor: not-allowed !important;
+      pointer-events: none !important;
+      box-shadow: none !important;
+      transform: none !important;
+      background: rgba(255, 255, 255, 0.02) !important;
+      border-color: rgba(255, 255, 255, 0.08) !important;
+      color: #94a3b8 !important;
+    }
+    button:disabled svg {
+      opacity: 0.4 !important;
+      transform: none !important;
+    }
+    button.active:disabled::after {
+      display: none !important;
     }
 
-    button:active { transform: scale(0.97); }
+    button:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.15);
+      color: #fff;
+      transform: translateY(-0.5px);
+    }
+
+    button:active {
+      transform: translateY(0) scale(0.98);
+    }
 
     button svg {
-      width: 16px;
-      height: 16px;
+      width: 15px;
+      height: 15px;
       flex-shrink: 0;
-      opacity: 0.75;
+      opacity: 0.8;
+      transition: transform 0.2s ease, opacity 0.2s ease;
     }
-    button:hover svg { opacity: 1; }
+    button:hover svg {
+      opacity: 1;
+      transform: scale(1.05);
+    }
 
     button.icon-only {
-      padding: 5px;
+      padding: 6px;
       min-width: 30px;
       min-height: 30px;
     }
 
     button.icon-only svg {
-      width: 17px;
-      height: 17px;
+      width: 15px;
+      height: 15px;
     }
 
+    /* Minimalist glowing indicator for active buttons */
     button.active {
-      background: var(--c-accent);
       border-color: var(--c-accent);
       color: #fff;
+      background: rgba(0, 240, 255, 0.04);
     }
     button.active svg { opacity: 1; }
-    button.active:hover { background: var(--c-accent); opacity: 0.9; }
+    button.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 20%;
+      right: 20%;
+      height: 2px;
+      background: var(--c-accent);
+      border-radius: 2px;
+      box-shadow: 0 0 6px var(--c-accent);
+    }
+    button.active:hover {
+      background: rgba(0, 240, 255, 0.08);
+    }
 
     button.primary {
-      background: var(--c-accent);
+      background: rgba(0, 240, 255, 0.08);
       border-color: var(--c-accent);
-      color: #fff;
-      font-weight: 500;
+      color: var(--c-accent);
+      font-weight: 600;
+      box-shadow: 0 0 8px rgba(0, 240, 255, 0.1);
     }
     button.primary svg { opacity: 1; }
-    button.primary:hover { opacity: 0.9; }
+    button.primary:hover {
+      background: rgba(0, 240, 255, 0.15);
+      border-color: var(--c-accent);
+      color: #fff;
+      box-shadow: 0 0 12px rgba(0, 240, 255, 0.25);
+      transform: translateY(-0.5px);
+    }
 
     button.warn {
-      background: transparent;
+      background: rgba(255, 77, 77, 0.04);
+      border-color: rgba(255, 77, 77, 0.15);
       color: var(--c-danger);
     }
     button.warn svg { opacity: 0.8; }
     button.warn:hover {
-      background: rgba(212,100,100,.1);
-      color: #e87a7a;
+      background: rgba(255, 77, 77, 0.08);
+      border-color: rgba(255, 77, 77, 0.35);
+      color: #ff8080;
     }
-    button.warn:hover svg { opacity: 1; }
 
+    /* Elegant native color input styling */
     input[type="color"] {
-      width: 28px;
-      height: 28px;
-      border: 1px solid var(--c-border);
-      border-radius: var(--radius);
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
       cursor: pointer;
       background: transparent;
-      padding: 2px;
-      transition: border-color var(--transition);
+      padding: 0;
+      overflow: hidden;
+      transition: all var(--transition);
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
     }
-    input[type="color"]:hover { border-color: var(--c-border-hover); }
+    input[type="color"]:hover {
+      border-color: var(--c-accent);
+      transform: scale(1.1);
+      box-shadow: 0 0 8px var(--c-accent-glow);
+    }
     input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
-    input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
+    input[type="color"]::-webkit-color-swatch { border: none; border-radius: 50%; }
 
+    /* Custom range input styling */
     input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
       width: 72px;
-      height: 4px;
+      height: 3px;
+      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.1);
+      outline: none;
       cursor: pointer;
-      accent-color: var(--c-accent);
-      opacity: 0.8;
+      transition: background 0.2s ease;
     }
-    input[type="range"]:hover { opacity: 1; }
+    input[type="range"]:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--c-accent);
+      box-shadow: 0 0 6px var(--c-accent);
+      transition: transform 0.15s ease;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.3);
+    }
 
     .preset-name-input,
-    .font-size-input {
-      padding: 5px 6px;
-      border: 1px solid var(--c-border);
-      border-radius: var(--radius);
-      background: transparent;
+    .font-size-input,
+    .preset-select {
+      padding: 4px 8px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.02);
       color: var(--c-text);
       font-size: 12px;
       font-family: inherit;
       transition: all var(--transition);
     }
+    .preset-name-input:hover,
+    .font-size-input:hover,
+    .preset-select:hover {
+      border-color: rgba(255, 255, 255, 0.15);
+    }
     .preset-name-input:focus,
-    .font-size-input:focus {
+    .font-size-input:focus,
+    .preset-select:focus {
       outline: none;
       border-color: var(--c-accent);
+      background: rgba(255, 255, 255, 0.04);
+      box-shadow: 0 0 6px var(--c-accent-glow);
     }
 
-    .preset-name-input { width: 100px; text-align: center; }
-    .font-size-input { width: 44px; text-align: center; font-weight: 500; }
+    .preset-name-input { width: 90px; text-align: center; }
+    .font-size-input { width: 42px; text-align: center; font-weight: 600; }
 
     .font-size-input::-webkit-inner-spin-button,
     .font-size-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     .font-size-input[type=number] { -moz-appearance: textfield; }
 
     .preset-select {
-      padding: 5px 8px;
-      border: 1px solid var(--c-border);
-      border-radius: var(--radius);
-      background: transparent;
-      color: var(--c-text);
-      font-size: 12px;
       cursor: pointer;
-      max-width: 110px;
-      font-family: inherit;
-      transition: all var(--transition);
+      max-width: 100px;
     }
-    .preset-select:focus { outline: none; border-color: var(--c-accent); }
-    .preset-select option { background: var(--c-surface); color: var(--c-text); }
+    .preset-select option { background: #0f111a; color: var(--c-text); }
 
     .speed-value {
-      font-size: 11px;
-      color: var(--c-text-muted);
-      min-width: 28px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #94a3b8;
+      min-width: 24px;
       text-align: center;
       font-variant-numeric: tabular-nums;
     }
 
     .separator {
       width: 1px;
-      height: 18px;
-      background: var(--c-border);
-      margin: 0 2px;
+      height: 16px;
+      background: rgba(255, 255, 255, 0.08);
+      margin: 0 4px;
       flex-shrink: 0;
     }
 
@@ -224,6 +418,10 @@
       position: relative;
       overflow: hidden;
       min-height: 150px;
+      margin: 0;
+      border-radius: 0;
+      border: none;
+      background: #000;
     }
 
     .display-content {
@@ -235,6 +433,7 @@
       word-break: break-word;
       will-change: transform;
       line-height: 1.8;
+      text-rendering: optimizeSpeed;
     }
 
     .display-content.horizontal-mode {
@@ -254,19 +453,19 @@
       transition: opacity 0.3s;
     }
     .fade-top {
-      top: 0; left: 0; right: 0; height: 80px;
+      top: 0; left: 0; right: 0; height: 100px;
       background: linear-gradient(to bottom, var(--bg, #000), transparent);
     }
     .fade-bottom {
-      bottom: 0; left: 0; right: 0; height: 80px;
+      bottom: 0; left: 0; right: 0; height: 100px;
       background: linear-gradient(to top, var(--bg, #000), transparent);
     }
     .fade-left {
-      top: 0; bottom: 0; left: 0; width: 80px;
+      top: 0; bottom: 0; left: 0; width: 100px;
       background: linear-gradient(to right, var(--bg, #000), transparent);
     }
     .fade-right {
-      top: 0; bottom: 0; right: 0; width: 80px;
+      top: 0; bottom: 0; right: 0; width: 100px;
       background: linear-gradient(to left, var(--bg, #000), transparent);
     }
 
@@ -274,59 +473,95 @@
     .editor-panel {
       flex-shrink: 0;
       background: var(--c-surface);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       border-top: 1px solid var(--c-border);
-      padding: 8px 14px 10px;
+      padding: 10px 16px;
+      margin: 0;
+      border-radius: 0;
+      box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.4);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .editor-panel .panel-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 5px;
+      margin-bottom: 6px;
     }
 
     .editor-panel .panel-title {
-      font-size: 10px;
-      font-weight: 500;
-      color: var(--c-text-muted);
-      letter-spacing: 0.3px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #94a3b8;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
     }
 
     .editor-panel textarea {
       width: 100%;
-      height: 86px;
-      background: var(--c-bg);
+      height: 96px;
+      background: rgba(0, 0, 0, 0.2);
       color: var(--c-text);
       border: 1px solid var(--c-border);
-      border-radius: var(--radius);
-      padding: 10px 12px;
+      border-radius: 6px;
+      padding: 8px 12px;
       font-size: 13px;
       font-family: inherit;
       resize: vertical;
-      line-height: 1.65;
-      transition: border-color var(--transition);
+      line-height: 1.6;
+      transition: all var(--transition);
     }
     .editor-panel textarea:focus {
       outline: none;
       border-color: var(--c-accent);
+      background: rgba(0, 0, 0, 0.3);
+      box-shadow: 0 0 6px var(--c-accent-glow);
     }
     .editor-panel textarea::placeholder { color: var(--c-text-muted); }
 
+    /* Collapsible Editor panel rules */
+    #btn-toggle-editor svg {
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .editor-panel.collapsed {
+      padding-bottom: 8px;
+    }
+    .editor-panel.collapsed textarea {
+      height: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+      border-color: transparent;
+      margin-top: 0;
+      pointer-events: none;
+      opacity: 0;
+    }
+    .editor-panel.collapsed #btn-toggle-editor svg {
+      transform: rotate(180deg);
+    }
+
     /* ===== Fullscreen ===== */
     body.fullscreen .toolbar {
-      padding: 5px 14px;
-      gap: 6px;
+      margin: 0;
+      border-radius: 0;
+      border-left: none;
+      border-right: none;
+      border-top: none;
+      background: rgba(13, 16, 24, 0.9);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      padding: 6px 16px;
+      gap: 8px;
     }
-    body.fullscreen .editor-panel { display: none; }
-    body.fullscreen .display-content { padding: 60px 140px; }
-    body.fullscreen .display-content.horizontal-mode { padding: 0 140px; }
+    body.fullscreen .editor-panel { display: none !important; }
+    body.fullscreen .display-content { padding: 80px 160px; }
+    body.fullscreen .display-content.horizontal-mode { padding: 0 160px; }
 
     /* auto-hide */
     body.fullscreen.auto-hide .toolbar {
       opacity: 0;
       pointer-events: none;
-      margin-block-start: calc(-1 * var(--toolbar-h, 40px));
-      transition: margin-block-start 0.3s ease, opacity 0.25s;
+      margin-block-start: calc(-1 * var(--toolbar-h, 48px));
+      transition: margin-block-start 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s;
     }
     body.fullscreen.auto-hide .toolbar.visible {
       opacity: 1;
@@ -339,7 +574,7 @@
       position: relative;
       display: inline-block;
       width: 30px;
-      height: 18px;
+      height: 16px;
       flex-shrink: 0;
     }
     .toggle-switch input { display: none; }
@@ -347,48 +582,67 @@
     .toggle-slider {
       position: absolute;
       inset: 0;
-      background: rgba(255,255,255,.1);
-      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 16px;
       cursor: pointer;
       transition: background var(--transition);
+      border: 1px solid rgba(255, 255, 255, 0.02);
     }
     .toggle-slider::before {
       content: '';
       position: absolute;
-      width: 12px; height: 12px;
-      left: 3px; bottom: 3px;
+      width: 10px; height: 10px;
+      left: 2px; bottom: 2px;
       background: #fff;
       border-radius: 50%;
       transition: transform var(--transition);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
     }
-    .toggle-switch input:checked+.toggle-slider { background: var(--c-accent); }
-    .toggle-switch input:checked+.toggle-slider::before { transform: translateX(12px); }
+    .toggle-switch input:checked+.toggle-slider {
+      background: var(--c-accent);
+      box-shadow: 0 0 6px var(--c-accent-glow);
+      border-color: transparent;
+    }
+    .toggle-switch input:checked+.toggle-slider::before {
+      transform: translateX(14px);
+      background: #07080c;
+    }
 
     .toggle-label {
-      font-size: 11px;
-      color: var(--c-text-muted);
+      font-size: 12px;
+      font-weight: 500;
+      color: #94a3b8;
       white-space: nowrap;
       user-select: none;
       cursor: pointer;
       line-height: 1.3;
-      text-align: center;
     }
     .toggle-label:hover { color: var(--c-text); }
 
     /* ===== Responsive ===== */
     @media (max-width: 768px) {
-      .toolbar { gap: 5px; padding: 6px 10px; }
-      button { padding: 4px 7px; font-size: 11px; }
+      .toolbar {
+        gap: 8px;
+        padding: 8px 12px;
+      }
+      .toolbar-section {
+        border-right: none;
+        padding-right: 0;
+        gap: 8px;
+        width: 100%;
+        justify-content: flex-start;
+      }
+      button { padding: 4px 8px; font-size: 12px; }
       button.icon-only { padding: 4px; min-width: 28px; min-height: 28px; }
-      button.icon-only svg { width: 15px; height: 15px; }
-      .display-content { padding: 30px 24px; }
-      .display-content.horizontal-mode { padding: 0 24px; }
-      body.fullscreen .display-content { padding: 30px 40px; }
+      button.icon-only svg { width: 14px; height: 14px; }
+      .display-content { padding: 40px 20px; }
+      .display-content.horizontal-mode { padding: 0 20px; }
+      body.fullscreen .display-content { padding: 40px 24px; }
       .separator { margin: 0; }
-      .ctrl-label { font-size: 9px; }
-      input[type="range"] { width: 48px; }
-      .fade-top, .fade-bottom { height: 40px; }
-      .fade-left, .fade-right { width: 40px; }
+      .ctrl-label { font-size: 10.5px; letter-spacing: 0.3px; }
+      input[type="range"] { width: 50px; }
+      .fade-top, .fade-bottom { height: 60px; }
+      .fade-left, .fade-right { width: 60px; }
     }
   </style>
 </head>
@@ -397,75 +651,81 @@
 
   <!-- Toolbar -->
   <div class="toolbar" id="toolbar">
-    <div class="ctrl-group">
+    <!-- Section 1: Presets & Files -->
+    <div class="toolbar-section">
       <button id="btn-import" class="icon-only" title="导入文本"><i data-lucide="file-up"></i></button>
       <input type="file" id="import-file" accept=".txt">
-      <button id="btn-fullscreen" class="icon-only" title="全屏"><i data-lucide="maximize"></i></button>
-      <button id="btn-fullscreen-play" class="primary" title="全屏并开始播放"><i data-lucide="play"></i> 全屏开始</button>
-      <label class="toggle-switch" title="全屏时自动隐藏工具栏，鼠标移到顶部显示">
-        <input type="checkbox" id="toggle-auto-hide">
-        <span class="toggle-slider"></span>
-      </label>
-      <span class="toggle-label">全屏自动隐藏<br>工具栏</span>
+      <div class="ctrl-group">
+        <span class="ctrl-label" title="预设"><i data-lucide="bookmark"></i></span>
+        <input type="text" class="preset-name-input" id="preset-name" value="" placeholder="预设名称">
+        <button id="btn-save-preset" class="icon-only" title="保存当前设置"><i data-lucide="save"></i></button>
+        <select class="preset-select" id="preset-select" title="加载预设">
+          <option value="">-- 加载 --</option>
+        </select>
+        <button id="btn-delete-preset" class="icon-only" title="删除当前预设"><i data-lucide="trash-2"></i></button>
+      </div>
     </div>
 
-    <div class="separator"></div>
-
-    <div class="ctrl-group">
-      <span class="ctrl-label">字号</span>
-      <button id="btn-font-dec" class="icon-only" title="缩小字号"><i data-lucide="minus"></i></button>
-      <input type="text" inputmode="numeric" class="font-size-input" id="font-size-input" value="36">
-      <button id="btn-font-inc" class="icon-only" title="放大字号"><i data-lucide="plus"></i></button>
+    <!-- Section 2: Appearance & Styling -->
+    <div class="toolbar-section">
+      <div class="ctrl-group">
+        <span class="ctrl-label" title="字号"><i data-lucide="a-large-small"></i></span>
+        <button id="btn-font-dec" class="icon-only" title="缩小字号"><i data-lucide="minus"></i></button>
+        <input type="text" inputmode="numeric" class="font-size-input" id="font-size-input" value="36">
+        <button id="btn-font-inc" class="icon-only" title="放大字号"><i data-lucide="plus"></i></button>
+      </div>
+      <div class="ctrl-group" style="gap: 8px;">
+        <div style="display:flex; align-items:center; gap:4px;" title="文字颜色">
+          <span class="ctrl-label"><i data-lucide="palette"></i></span>
+          <input type="color" id="font-color" value="#ffffff">
+        </div>
+        <div style="display:flex; align-items:center; gap:4px;" title="背景颜色">
+          <span class="ctrl-label"><i data-lucide="paint-bucket"></i></span>
+          <input type="color" id="bg-color" value="#000000">
+        </div>
+      </div>
     </div>
 
-    <div class="separator"></div>
-
-    <div class="ctrl-group">
-      <span class="ctrl-label">文字色</span>
-      <input type="color" id="font-color" value="#ffffff">
+    <!-- Section 3: Motion & Scrolling -->
+    <div class="toolbar-section">
+      <div class="ctrl-group">
+        <span class="ctrl-label">方向</span>
+        <button class="direction-btn icon-only active" data-dir="bottom-up" title="从下往上"><i data-lucide="arrow-up"></i></button>
+        <button class="direction-btn icon-only" data-dir="top-down" title="从上往下"><i data-lucide="arrow-down"></i></button>
+        <button class="direction-btn icon-only" data-dir="right-left" title="从右往左"><i data-lucide="arrow-left"></i></button>
+        <button class="direction-btn icon-only" data-dir="left-right" title="从左往右"><i data-lucide="arrow-right"></i></button>
+      </div>
+      <div class="ctrl-group">
+        <span class="ctrl-label">速度</span>
+        <input type="range" id="speed-slider" min="10" max="500" value="60" step="5">
+        <span class="speed-value" id="speed-display">60</span>
+      </div>
     </div>
 
-    <div class="ctrl-group">
-      <span class="ctrl-label">背景色</span>
-      <input type="color" id="bg-color" value="#000000">
-    </div>
-
-    <div class="separator"></div>
-
-    <div class="ctrl-group">
-      <span class="ctrl-label">方向</span>
-      <button class="direction-btn icon-only active" data-dir="bottom-up" title="从下往上"><i data-lucide="arrow-up"></i></button>
-      <button class="direction-btn icon-only" data-dir="top-down" title="从上往下"><i data-lucide="arrow-down"></i></button>
-      <button class="direction-btn icon-only" data-dir="right-left" title="从右往左"><i data-lucide="arrow-left"></i></button>
-      <button class="direction-btn icon-only" data-dir="left-right" title="从左往右"><i data-lucide="arrow-right"></i></button>
-    </div>
-
-    <div class="separator"></div>
-
-    <div class="ctrl-group">
-      <span class="ctrl-label">速度</span>
-      <input type="range" id="speed-slider" min="10" max="500" value="60" step="5">
-      <span class="speed-value" id="speed-display">60</span>
-    </div>
-
-    <div class="separator"></div>
-
-    <div class="ctrl-group">
-      <span class="ctrl-label">预设</span>
-      <input type="text" class="preset-name-input" id="preset-name" value="" placeholder="预设名称">
-      <button id="btn-save-preset" class="icon-only" title="保存当前设置"><i data-lucide="save"></i></button>
-      <select class="preset-select" id="preset-select" title="加载预设">
-        <option value="">-- 加载 --</option>
-      </select>
-      <button id="btn-delete-preset" class="icon-only" title="删除当前预设"><i data-lucide="trash-2"></i></button>
-    </div>
-
-    <div class="separator"></div>
-
-    <div class="ctrl-group">
-      <button class="primary" id="btn-play"><i data-lucide="play"></i> 开始</button>
-      <button id="btn-pause" class="icon-only" title="暂停"><i data-lucide="pause"></i></button>
-      <button class="warn icon-only" id="btn-reset" title="重置"><i data-lucide="rotate-ccw"></i></button>
+    <!-- Section 4: Playback Controls & View -->
+    <div class="toolbar-section">
+      <div class="ctrl-group">
+        <div class="dropdown-container">
+          <button class="primary" id="btn-play" style="border-top-right-radius:0; border-bottom-right-radius:0; border-right:1px solid rgba(255,255,255,0.15);"><i data-lucide="play"></i> 开始</button>
+          <button class="primary icon-only" id="btn-play-toggle" style="border-top-left-radius:0; border-bottom-left-radius:0; padding:5px; min-width:24px;" title="选择播放模式"><i data-lucide="chevron-down"></i></button>
+          <div class="dropdown-menu" id="play-dropdown-menu">
+            <div class="dropdown-item active" data-mode="normal"><i data-lucide="play"></i> 开始</div>
+            <div class="dropdown-item" data-mode="fullscreen"><i data-lucide="maximize"></i> 全屏开始</div>
+          </div>
+        </div>
+        <button id="btn-pause" class="icon-only" title="暂停" style="display: none;"><i data-lucide="pause"></i></button>
+        <button class="warn icon-only" id="btn-reset" title="重置"><i data-lucide="rotate-ccw"></i></button>
+      </div>
+      <div class="ctrl-group">
+        <button id="btn-fullscreen" class="icon-only" title="全屏"><i data-lucide="maximize"></i></button>
+        <div style="display:flex; align-items:center; gap:5px;">
+          <label class="toggle-switch" title="全屏时自动隐藏工具栏，鼠标移到顶部显示">
+            <input type="checkbox" id="toggle-auto-hide">
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="toggle-label">自动隐藏</span>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -481,11 +741,24 @@
   <!-- Editor Panel -->
   <div class="editor-panel" id="editor-panel">
     <div class="panel-header">
-      <span class="panel-title">编辑提词内容</span>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button id="btn-toggle-editor" class="icon-only" title="收起/展开编辑器" style="padding:2px; min-width:24px; min-height:24px; border:none; background:transparent;"><i data-lucide="chevron-down"></i></button>
+        <span class="panel-title">编辑提词内容</span>
+      </div>
       <button id="btn-clear" class="icon-only" title="清空内容" style="padding:3px 6px;"><i data-lucide="trash-2"></i></button>
     </div>
     <textarea id="text-editor" placeholder="在此粘贴或编辑提词内容..."></textarea>
   </div>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('Service worker registered:', reg.scope))
+          .catch(err => console.log('Service worker registration failed:', err));
+      });
+    }
+  </script>
 
   <script>
     (function() {
@@ -502,9 +775,15 @@
       const fadeBottom = document.getElementById('fade-bottom');
       const fadeLeft = document.getElementById('fade-left');
       const fadeRight = document.getElementById('fade-right');
+      const btnToggleEditor = document.getElementById('btn-toggle-editor');
+      const editorPanel = document.getElementById('editor-panel');
+      const btnPlayToggle = document.getElementById('btn-play-toggle');
+      const playDropdownMenu = document.getElementById('play-dropdown-menu');
 
       // ── State ─────────────────────────────────────
       let isPlaying = false;
+      let isAtBeginning = true;
+      let playMode = 'normal'; // normal or fullscreen
       let direction = 'bottom-up';
       let speed = 60; // px/s
       let fontSize = 36; // px
@@ -760,6 +1039,9 @@
 
         position = initialPosition();
         applyTransform();
+
+        isAtBeginning = true;
+        updatePlayButtons();
       }
 
       function applyTransform() {
@@ -795,6 +1077,7 @@
         if (!textEditor.value.trim()) return;
 
         isPlaying = true;
+        isAtBeginning = false;
         lastTime = 0;
         animationId = requestAnimationFrame(animate);
         updatePlayButtons();
@@ -825,10 +1108,36 @@
 
       function updatePlayButtons() {
         const btnPlay = document.getElementById('btn-play');
-        const text = isPlaying ? ' 播放中' : ' 开始';
-        const iconName = isPlaying ? 'pause' : 'play';
-        btnPlay.innerHTML = `<i data-lucide="${iconName}"></i>${text}`;
-        btnPlay.style.opacity = isPlaying ? '0.7' : '1';
+        const btnPause = document.getElementById('btn-pause');
+        const btnPlayToggle = document.getElementById('btn-play-toggle');
+
+        let text = '';
+        if (isAtBeginning) {
+          text = playMode === 'fullscreen' ? ' 全屏开始' : ' 开始';
+        } else {
+          text = playMode === 'fullscreen' ? ' 全屏继续' : ' 继续';
+        }
+
+        btnPlay.innerHTML = `<i data-lucide="play"></i>${text}`;
+        
+        btnPlay.disabled = isPlaying;
+        btnPlayToggle.disabled = isPlaying;
+
+        btnPause.style.display = isPlaying ? 'inline-flex' : 'none';
+        btnPause.disabled = !isPlaying;
+
+        const normalItem = playDropdownMenu.querySelector('[data-mode="normal"]');
+        const fullscreenItem = playDropdownMenu.querySelector('[data-mode="fullscreen"]');
+        if (normalItem && fullscreenItem) {
+          if (isAtBeginning) {
+            normalItem.innerHTML = `<i data-lucide="play"></i> 开始`;
+            fullscreenItem.innerHTML = `<i data-lucide="maximize"></i> 全屏开始`;
+          } else {
+            normalItem.innerHTML = `<i data-lucide="play"></i> 继续`;
+            fullscreenItem.innerHTML = `<i data-lucide="maximize"></i> 全屏继续`;
+          }
+        }
+
         safeCreateIcons();
       }
 
@@ -930,15 +1239,40 @@
       }
 
       // ── Event bindings ────────────────────────────
-      document.getElementById('btn-play').addEventListener('click', start);
+      function handlePlayClick() {
+        if (playMode === 'fullscreen') {
+          if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen();
+          }
+        }
+        start();
+      }
+
+      document.getElementById('btn-play').addEventListener('click', handlePlayClick);
       document.getElementById('btn-pause').addEventListener('click', pause);
       document.getElementById('btn-reset').addEventListener('click', reset);
       document.getElementById('btn-fullscreen').addEventListener('click', toggleFullscreen);
-      document.getElementById('btn-fullscreen-play').addEventListener('click', () => {
-        if (!document.fullscreenElement) {
-          document.documentElement.requestFullscreen();
-        }
-        start();
+
+      // Dropdown toggle click
+      btnPlayToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        playDropdownMenu.classList.toggle('show');
+      });
+
+      // Close dropdown when clicking elsewhere
+      document.addEventListener('click', () => {
+        playDropdownMenu.classList.remove('show');
+      });
+
+      // Handle dropdown item click
+      playDropdownMenu.querySelectorAll('.dropdown-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+          playMode = item.dataset.mode;
+          playDropdownMenu.querySelectorAll('.dropdown-item').forEach(el => {
+            el.classList.toggle('active', el === item);
+          });
+          updatePlayButtons();
+        });
       });
       document.getElementById('btn-import').addEventListener('click', () => {
         document.getElementById('import-file').click();
@@ -953,6 +1287,13 @@
           updateDisplayContent();
           measureAndResetPosition();
         }
+      });
+
+      btnToggleEditor.addEventListener('click', () => {
+        const isCollapsed = !editorPanel.classList.contains('collapsed');
+        editorPanel.classList.toggle('collapsed', isCollapsed);
+        localStorage.setItem('teleprompter_editor_collapsed', isCollapsed ? '1' : '0');
+        setTimeout(measureAndResetPosition, 250);
       });
 
       document.getElementById('btn-font-inc').addEventListener('click', () => onFontSizeChange(2));
@@ -1067,6 +1408,11 @@
         // Restore auto-hide preference
         if (localStorage.getItem('teleprompter_auto_hide') === '1') {
           document.getElementById('toggle-auto-hide').checked = true;
+        }
+
+        // Restore editor collapse state
+        if (localStorage.getItem('teleprompter_editor_collapsed') === '1') {
+          editorPanel.classList.add('collapsed');
         }
 
         updateDisplayContent();
