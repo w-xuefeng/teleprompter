@@ -992,6 +992,10 @@
       color: #22c55e;
     }
 
+    .modal .status-text.error {
+      color: #ef4444;
+    }
+
     .modal .btn-refresh {
       background: none;
       border: 1px solid var(--c-border);
@@ -1996,15 +2000,25 @@
 
         const url = 'ws://' + server;
         updateRemoteStatus('正在连接...');
+        var connectError = false;
 
         try {
           remoteWs = new WebSocket(url);
         } catch (e) {
-          updateRemoteStatus('连接失败');
+          updateRemoteStatus('无法连接 ' + server + ' — 请检查地址格式是否正确', true);
           return;
         }
 
+        var connectTimeout = setTimeout(function() {
+          if (remoteWs && remoteWs.readyState === WebSocket.CONNECTING) {
+            connectError = true;
+            remoteWs.close();
+            updateRemoteStatus('连接超时 — 请确认 ' + server + ' 上的服务器是否已启动', true);
+          }
+        }, 10000);
+
         remoteWs.onopen = function() {
+          clearTimeout(connectTimeout);
           remoteWs.send(JSON.stringify({
             type: 'join',
             room: remoteRoomCode,
@@ -2016,14 +2030,23 @@
           handleRemoteMessage(JSON.parse(e.data));
         };
 
-        remoteWs.onclose = function() {
+        remoteWs.onclose = function(e) {
+          clearTimeout(connectTimeout);
           remoteConnected = false;
-          updateRemoteStatus('已断开');
+          if (!connectError) {
+            if (e.code === 1006) {
+              updateRemoteStatus('无法连接 ' + server + ' — 请确认服务器地址和端口是否正确', true);
+            } else {
+              updateRemoteStatus('已断开');
+            }
+          }
           updateRemoteUI();
         };
 
         remoteWs.onerror = function() {
-          updateRemoteStatus('连接错误');
+          clearTimeout(connectTimeout);
+          connectError = true;
+          updateRemoteStatus('无法连接 ' + server + ' — 请确认服务器地址和端口是否正确', true);
         };
       }
 
@@ -2116,11 +2139,12 @@
         }
       }
 
-      function updateRemoteStatus(text) {
+      function updateRemoteStatus(text, isError) {
         const el = document.getElementById('remote-status');
         if (!el) return;
         el.textContent = text;
         el.classList.toggle('connected', text === '已连接');
+        el.classList.toggle('error', !!isError);
       }
 
       function updateRemoteUI() {
