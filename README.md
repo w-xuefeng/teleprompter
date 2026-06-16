@@ -67,6 +67,60 @@
 
 > **提示**：GitHub Pages（HTTPS）无法连接本地 `ws://` 服务，请直接通过服务端的 HTTP 地址访问页面，而非 GitHub Pages。
 
+### 自部署服务端
+
+如果需要长期运行或开机自启，推荐以下方式：
+
+**pm2 守护进程**
+
+```bash
+cd server
+npm install -g pm2
+pm2 start server.js --name teleprompter
+pm2 save
+pm2 startup        # 设置开机自启
+```
+
+pm2 常用命令：
+
+```bash
+pm2 status         # 查看运行状态
+pm2 logs teleprompter  # 查看日志
+pm2 restart teleprompter  # 重启
+```
+
+**systemd 服务（Linux）**
+
+创建 `/etc/systemd/system/teleprompter.service`：
+
+```ini
+[Unit]
+Description=Teleprompter Remote Server
+After=network.target
+
+[Service]
+Type=simple
+User=<你的用户名>
+WorkingDirectory=/path/to/teleprompter/server
+ExecStart=/usr/bin/node server.js
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now teleprompter
+```
+
+**自定义端口**
+
+```bash
+PORT=8080 npm start           # 临时指定
+# 或修改 systemd/pm2 中的环境变量 PORT=8080
+```
+
 ## 键盘快捷键
 
 | 按键 | 功能 |
