@@ -2008,6 +2008,7 @@
       let remotePaired = false;
       let remoteRoomCode = '';
       let heartbeatTimer = null;
+      let remoteIntentionalClose = false;
 
       function getRemoteServer() {
         return localStorage.getItem(REMOTE_SERVER_KEY) || '';
@@ -2066,6 +2067,17 @@
         server = server.replace(/^https?:\/\//, '').replace(/\/$/, '');
         setRemoteServer(server);
 
+        // Clean up existing connection
+        if (remoteWs) {
+          remoteIntentionalClose = true;
+          remoteWs.onclose = null;
+          remoteWs.onerror = null;
+          remoteWs.close();
+          remoteWs = null;
+        }
+        clearInterval(heartbeatTimer);
+        heartbeatTimer = null;
+
         let code = document.getElementById('remote-room-code').textContent.trim();
         if (!code || code === '------') {
           code = generateRoomCode();
@@ -2118,13 +2130,14 @@
           heartbeatTimer = null;
           remoteConnected = false;
           remotePaired = false;
-          if (!connectError) {
+          if (!connectError && !remoteIntentionalClose) {
             if (e.code === 1006) {
               updateRemoteStatus('无法连接 ' + server + ' — 请确认服务器地址和端口是否正确', 'error');
             } else {
               updateRemoteStatus('已断开', 'warning');
             }
           }
+          remoteIntentionalClose = false;
           updateRemoteUI();
         };
 
@@ -2143,6 +2156,7 @@
         clearInterval(heartbeatTimer);
         heartbeatTimer = null;
         if (remoteWs) {
+          remoteIntentionalClose = true;
           remoteWs.close();
           remoteWs = null;
         }
@@ -2281,7 +2295,13 @@
         document.getElementById('remote-room-code').textContent = savedRoom || generateRoomCode();
         document.getElementById('remote-modal-overlay').classList.add('show');
         updateRemoteUI();
-        updateRemoteStatus(remoteConnected ? '已连接' : '未连接');
+        if (remotePaired) {
+          updateRemoteStatus('遥控器已配对', 'success');
+        } else if (remoteConnected) {
+          updateRemoteStatus('已连接到服务器，等待遥控器配对');
+        } else {
+          updateRemoteStatus('未连接');
+        }
         safeCreateIcons();
       }
 
@@ -2301,7 +2321,9 @@
       });
 
       document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') hideRemoteModal();
+        if (e.key === 'Escape' && document.activeElement.tagName !== 'INPUT') {
+          hideRemoteModal();
+        }
       });
 
       document.getElementById('btn-remote-connect').addEventListener('click', connectRemote);

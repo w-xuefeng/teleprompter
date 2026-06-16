@@ -832,6 +832,7 @@
       let ws = null;
       let connected = false;
       let heartbeatTimer = null;
+      let intentionalClose = false;
       let currentState = {
         isPlaying: false,
         direction: 'bottom-up',
@@ -856,6 +857,17 @@
 
       // ── Connection ────────────────────────────────
       function connect() {
+        // Clean up existing connection
+        if (ws) {
+          intentionalClose = true;
+          ws.onclose = null;
+          ws.onerror = null;
+          ws.close();
+          ws = null;
+        }
+        clearInterval(heartbeatTimer);
+        heartbeatTimer = null;
+
         var server = serverAddr.value.trim();
         server = server.replace(/^https?:\/\//, '').replace(/\/$/, '');
         var room = roomInput.value.trim().toUpperCase();
@@ -912,11 +924,12 @@
           heartbeatTimer = null;
           if (connected) {
             onDisconnected();
-          } else if (!connectFailed) {
+          } else if (!connectFailed && !intentionalClose) {
             btnConnect.textContent = '连接';
             btnConnect.disabled = false;
             alert('连接失败，请确认服务器地址和房间代码正确');
           }
+          intentionalClose = false;
           ws = null;
         };
 
@@ -952,6 +965,7 @@
         clearInterval(heartbeatTimer);
         heartbeatTimer = null;
         if (ws) {
+          intentionalClose = true;
           ws.close();
           ws = null;
         }
