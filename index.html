@@ -33,20 +33,29 @@
       --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
     /* Custom Scrollbars */
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
     }
+
     ::-webkit-scrollbar-track {
       background: rgba(255, 255, 255, 0.01);
     }
+
     ::-webkit-scrollbar-thumb {
       background: rgba(255, 255, 255, 0.12);
       border-radius: 3px;
     }
+
     ::-webkit-scrollbar-thumb:hover {
       background: var(--c-accent);
       box-shadow: 0 0 6px var(--c-accent);
@@ -55,8 +64,8 @@
     body {
       font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
       background: radial-gradient(circle at top right, rgba(0, 240, 255, 0.05), transparent 40%),
-                  radial-gradient(circle at bottom left, rgba(0, 240, 255, 0.02), transparent 45%),
-                  var(--c-bg);
+        radial-gradient(circle at bottom left, rgba(0, 240, 255, 0.02), transparent 45%),
+        var(--c-bg);
       color: var(--c-text);
       height: 100vh;
       display: flex;
@@ -101,7 +110,7 @@
       display: inline-flex;
       align-items: stretch;
     }
-    
+
     .dropdown-menu {
       position: absolute;
       top: calc(100% + 6px);
@@ -119,11 +128,11 @@
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
     }
-    
+
     .dropdown-menu.show {
       display: flex;
     }
-    
+
     .dropdown-item {
       padding: 6px 12px;
       font-size: 12.5px;
@@ -135,12 +144,12 @@
       transition: background var(--transition);
       user-select: none;
     }
-    
+
     .dropdown-item:hover {
       background: rgba(255, 255, 255, 0.05);
       color: var(--c-accent);
     }
-    
+
     .dropdown-item.active {
       color: var(--c-accent);
       font-weight: 600;
@@ -157,6 +166,7 @@
       border: 1px solid transparent;
       transition: all var(--transition);
     }
+
     .ctrl-group:focus-within {
       border-color: rgba(0, 240, 255, 0.2);
       background: rgba(255, 255, 255, 0.03);
@@ -174,6 +184,7 @@
       align-items: center;
       justify-content: center;
     }
+
     .ctrl-label svg {
       width: 15px;
       height: 15px;
@@ -210,10 +221,12 @@
       border-color: rgba(255, 255, 255, 0.08) !important;
       color: #94a3b8 !important;
     }
+
     button:disabled svg {
       opacity: 0.4 !important;
       transform: none !important;
     }
+
     button.active:disabled::after {
       display: none !important;
     }
@@ -236,6 +249,7 @@
       opacity: 0.8;
       transition: transform 0.2s ease, opacity 0.2s ease;
     }
+
     button:hover svg {
       opacity: 1;
       transform: scale(1.05);
@@ -258,7 +272,11 @@
       color: #fff;
       background: rgba(0, 240, 255, 0.04);
     }
-    button.active svg { opacity: 1; }
+
+    button.active svg {
+      opacity: 1;
+    }
+
     button.active::after {
       content: '';
       position: absolute;
@@ -270,6 +288,7 @@
       border-radius: 2px;
       box-shadow: 0 0 6px var(--c-accent);
     }
+
     button.active:hover {
       background: rgba(0, 240, 255, 0.08);
     }
@@ -281,7 +300,11 @@
       font-weight: 600;
       box-shadow: 0 0 8px rgba(0, 240, 255, 0.1);
     }
-    button.primary svg { opacity: 1; }
+
+    button.primary svg {
+      opacity: 1;
+    }
+
     button.primary:hover {
       background: rgba(0, 240, 255, 0.15);
       border-color: var(--c-accent);
@@ -295,7 +318,11 @@
       border-color: rgba(255, 77, 77, 0.15);
       color: var(--c-danger);
     }
-    button.warn svg { opacity: 0.8; }
+
+    button.warn svg {
+      opacity: 0.8;
+    }
+
     button.warn:hover {
       background: rgba(255, 77, 77, 0.08);
       border-color: rgba(255, 77, 77, 0.35);
@@ -317,13 +344,21 @@
       transition: all var(--transition);
       box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
     }
+
     input[type="color"]:hover {
       border-color: var(--c-accent);
       transform: scale(1.1);
       box-shadow: 0 0 8px var(--c-accent-glow);
     }
-    input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
-    input[type="color"]::-webkit-color-swatch { border: none; border-radius: 50%; }
+
+    input[type="color"]::-webkit-color-swatch-wrapper {
+      padding: 0;
+    }
+
+    input[type="color"]::-webkit-color-swatch {
+      border: none;
+      border-radius: 50%;
+    }
 
     /* Custom range input styling */
     input[type="range"] {
@@ -337,9 +372,11 @@
       cursor: pointer;
       transition: background 0.2s ease;
     }
+
     input[type="range"]:hover {
       background: rgba(255, 255, 255, 0.15);
     }
+
     input[type="range"]::-webkit-slider-thumb {
       -webkit-appearance: none;
       appearance: none;
@@ -350,6 +387,7 @@
       box-shadow: 0 0 6px var(--c-accent);
       transition: transform 0.15s ease;
     }
+
     input[type="range"]::-webkit-slider-thumb:hover {
       transform: scale(1.3);
     }
@@ -360,14 +398,17 @@
       min-width: 100px;
       height: 4px;
     }
+
     #progress-slider::-webkit-slider-thumb {
       width: 14px;
       height: 14px;
     }
+
     #progress-slider:disabled {
       opacity: 0.3;
       cursor: default;
     }
+
     #progress-slider:disabled::-webkit-slider-thumb {
       background: rgba(255, 255, 255, 0.25);
       box-shadow: none;
@@ -386,11 +427,13 @@
       font-family: inherit;
       transition: all var(--transition);
     }
+
     .preset-name-input:hover,
     .font-size-input:hover,
     .preset-select:hover {
       border-color: rgba(255, 255, 255, 0.15);
     }
+
     .preset-name-input:focus,
     .font-size-input:focus,
     .preset-select:focus {
@@ -400,18 +443,36 @@
       box-shadow: 0 0 6px var(--c-accent-glow);
     }
 
-    .preset-name-input { width: 90px; text-align: center; }
-    .font-size-input { width: 42px; text-align: center; font-weight: 600; }
+    .preset-name-input {
+      width: 90px;
+      text-align: center;
+    }
+
+    .font-size-input {
+      width: 42px;
+      text-align: center;
+      font-weight: 600;
+    }
 
     .font-size-input::-webkit-inner-spin-button,
-    .font-size-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-    .font-size-input[type=number] { -moz-appearance: textfield; }
+    .font-size-input::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .font-size-input[type=number] {
+      -moz-appearance: textfield;
+    }
 
     .preset-select {
       cursor: pointer;
       max-width: 100px;
     }
-    .preset-select option { background: #0f111a; color: var(--c-text); }
+
+    .preset-select option {
+      background: #0f111a;
+      color: var(--c-text);
+    }
 
     .speed-value {
       font-size: 12px;
@@ -430,7 +491,9 @@
       flex-shrink: 0;
     }
 
-    #import-file { display: none; }
+    #import-file {
+      display: none;
+    }
 
     /* ===== Display Area ===== */
     .display-container {
@@ -466,26 +529,45 @@
     }
 
     /* Edge fades */
-    .fade-top, .fade-bottom, .fade-left, .fade-right {
+    .fade-top,
+    .fade-bottom,
+    .fade-left,
+    .fade-right {
       position: absolute;
       pointer-events: none;
       z-index: 2;
       transition: opacity 0.3s;
     }
+
     .fade-top {
-      top: 0; left: 0; right: 0; height: 100px;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 100px;
       background: linear-gradient(to bottom, var(--bg, #000), transparent);
     }
+
     .fade-bottom {
-      bottom: 0; left: 0; right: 0; height: 100px;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 100px;
       background: linear-gradient(to top, var(--bg, #000), transparent);
     }
+
     .fade-left {
-      top: 0; bottom: 0; left: 0; width: 100px;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 100px;
       background: linear-gradient(to right, var(--bg, #000), transparent);
     }
+
     .fade-right {
-      top: 0; bottom: 0; right: 0; width: 100px;
+      top: 0;
+      bottom: 0;
+      right: 0;
+      width: 100px;
       background: linear-gradient(to left, var(--bg, #000), transparent);
     }
 
@@ -532,21 +614,27 @@
       line-height: 1.6;
       transition: all var(--transition);
     }
+
     .editor-panel textarea:focus {
       outline: none;
       border-color: var(--c-accent);
       background: rgba(0, 0, 0, 0.3);
       box-shadow: 0 0 6px var(--c-accent-glow);
     }
-    .editor-panel textarea::placeholder { color: var(--c-text-muted); }
+
+    .editor-panel textarea::placeholder {
+      color: var(--c-text-muted);
+    }
 
     /* Collapsible Editor panel rules */
     #btn-toggle-editor svg {
       transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
+
     .editor-panel.collapsed {
       padding-bottom: 8px;
     }
+
     .editor-panel.collapsed textarea {
       height: 0;
       padding-top: 0;
@@ -556,6 +644,7 @@
       pointer-events: none;
       opacity: 0;
     }
+
     .editor-panel.collapsed #btn-toggle-editor svg {
       transform: rotate(180deg);
     }
@@ -572,9 +661,18 @@
       padding: 6px 16px;
       gap: 8px;
     }
-    body.fullscreen .editor-panel { display: none !important; }
-    body.fullscreen .display-content { padding: 80px 160px; }
-    body.fullscreen .display-content.horizontal-mode { padding: 0 160px; }
+
+    body.fullscreen .editor-panel {
+      display: none !important;
+    }
+
+    body.fullscreen .display-content {
+      padding: 80px 160px;
+    }
+
+    body.fullscreen .display-content.horizontal-mode {
+      padding: 0 160px;
+    }
 
     /* auto-hide */
     body.fullscreen.auto-hide .toolbar {
@@ -583,6 +681,7 @@
       margin-block-start: calc(-1 * var(--toolbar-h, 48px));
       transition: margin-block-start 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s;
     }
+
     body.fullscreen.auto-hide .toolbar.visible {
       opacity: 1;
       pointer-events: auto;
@@ -597,7 +696,10 @@
       height: 16px;
       flex-shrink: 0;
     }
-    .toggle-switch input { display: none; }
+
+    .toggle-switch input {
+      display: none;
+    }
 
     .toggle-slider {
       position: absolute;
@@ -608,21 +710,26 @@
       transition: background var(--transition);
       border: 1px solid rgba(255, 255, 255, 0.02);
     }
+
     .toggle-slider::before {
       content: '';
       position: absolute;
-      width: 10px; height: 10px;
-      left: 2px; bottom: 2px;
+      width: 10px;
+      height: 10px;
+      left: 2px;
+      bottom: 2px;
       background: #fff;
       border-radius: 50%;
       transition: transform var(--transition);
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
     }
+
     .toggle-switch input:checked+.toggle-slider {
       background: var(--c-accent);
       box-shadow: 0 0 6px var(--c-accent-glow);
       border-color: transparent;
     }
+
     .toggle-switch input:checked+.toggle-slider::before {
       transform: translateX(14px);
       background: #07080c;
@@ -637,7 +744,10 @@
       cursor: pointer;
       line-height: 1.3;
     }
-    .toggle-label:hover { color: var(--c-text); }
+
+    .toggle-label:hover {
+      color: var(--c-text);
+    }
 
     /* ===== Responsive ===== */
     @media (max-width: 768px) {
@@ -645,6 +755,7 @@
         gap: 8px;
         padding: 8px 12px;
       }
+
       .toolbar-section {
         border-right: none;
         padding-right: 0;
@@ -652,17 +763,302 @@
         width: 100%;
         justify-content: flex-start;
       }
-      button { padding: 4px 8px; font-size: 12px; }
-      button.icon-only { padding: 4px; min-width: 28px; min-height: 28px; }
-      button.icon-only svg { width: 14px; height: 14px; }
-      .display-content { padding: 40px 20px; }
-      .display-content.horizontal-mode { padding: 0 20px; }
-      body.fullscreen .display-content { padding: 40px 24px; }
-      .separator { margin: 0; }
-      .ctrl-label { font-size: 10.5px; letter-spacing: 0.3px; }
-      input[type="range"] { width: 50px; }
-      .fade-top, .fade-bottom { height: 60px; }
-      .fade-left, .fade-right { width: 60px; }
+
+      button {
+        padding: 4px 8px;
+        font-size: 12px;
+      }
+
+      button.icon-only {
+        padding: 4px;
+        min-width: 28px;
+        min-height: 28px;
+      }
+
+      button.icon-only svg {
+        width: 14px;
+        height: 14px;
+      }
+
+      .display-content {
+        padding: 40px 20px;
+      }
+
+      .display-content.horizontal-mode {
+        padding: 0 20px;
+      }
+
+      body.fullscreen .display-content {
+        padding: 40px 24px;
+      }
+
+      .separator {
+        margin: 0;
+      }
+
+      .ctrl-label {
+        font-size: 10.5px;
+        letter-spacing: 0.3px;
+      }
+
+      input[type="range"] {
+        width: 50px;
+      }
+
+      .fade-top,
+      .fade-bottom {
+        height: 60px;
+      }
+
+      .fade-left,
+      .fade-right {
+        width: 60px;
+      }
+    }
+
+    /* ── Remote Control Modal ──────────────────── */
+    .remote-btn {
+      position: relative;
+    }
+
+    .remote-btn .status-dot {
+      position: absolute;
+      top: 3px;
+      right: 3px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #555;
+      transition: background var(--transition);
+    }
+
+    .remote-btn.connected .status-dot {
+      background: #22c55e;
+      box-shadow: 0 0 5px rgba(34, 197, 94, 0.5);
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--transition);
+    }
+
+    .modal-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal {
+      background: var(--c-elevated);
+      border: 1px solid var(--c-border);
+      border-radius: 12px;
+      padding: 24px;
+      width: 90%;
+      max-width: 400px;
+      color: var(--c-text);
+    }
+
+    .modal h3 {
+      font-size: 16px;
+      font-weight: 600;
+      margin: 0 0 16px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .modal-close {
+      margin-left: auto;
+      background: none;
+      border: 1px solid var(--c-border);
+      color: var(--c-text-muted);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition);
+      min-width: 26px;
+      min-height: 26px;
+    }
+    .modal-close:hover {
+      border-color: var(--c-border-hover);
+      color: var(--c-text);
+      background: rgba(255,255,255,0.04);
+    }
+
+    .modal .form-group {
+      margin-bottom: 14px;
+    }
+
+    .modal .form-label {
+      display: block;
+      font-size: 11px;
+      color: var(--c-text-muted);
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .modal input[type="text"] {
+      width: 100%;
+      padding: 8px 12px;
+      background: var(--c-bg);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius);
+      color: var(--c-text);
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color var(--transition);
+    }
+
+    .modal input[type="text"]:focus {
+      border-color: var(--c-accent);
+    }
+
+    .modal .room-code {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: 6px;
+      text-align: center;
+      padding: 14px;
+      background: var(--c-bg);
+      border-radius: 8px;
+      font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+      color: var(--c-accent);
+      user-select: all;
+      cursor: pointer;
+    }
+
+    .modal .btn-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .modal .btn-row button {
+      flex: 1;
+      padding: 10px 16px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid var(--c-border);
+      background: var(--c-surface);
+      color: var(--c-text);
+      transition: all var(--transition);
+      font-family: inherit;
+    }
+
+    .modal .btn-row button:hover {
+      border-color: var(--c-border-hover);
+    }
+
+    .modal .btn-row button.primary {
+      background: var(--c-accent);
+      color: #000;
+      border-color: var(--c-accent);
+      font-weight: 600;
+    }
+
+    .modal .btn-row button.primary:hover {
+      background: var(--c-accent-hover);
+    }
+
+    .modal .btn-row button.danger {
+      border-color: var(--c-danger);
+      color: var(--c-danger);
+    }
+
+    .modal .status-text {
+      font-size: 12px;
+      color: var(--c-text-muted);
+      text-align: center;
+      margin-top: 10px;
+      transition: color var(--transition);
+    }
+
+    .modal .status-text.connected {
+      color: #22c55e;
+    }
+
+    .modal .btn-refresh {
+      background: none;
+      border: 1px solid var(--c-border);
+      color: var(--c-text-muted);
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: var(--radius);
+      font-size: 12px;
+      transition: all var(--transition);
+      font-family: inherit;
+      margin-left: 8px;
+    }
+
+    .modal .btn-refresh:hover {
+      border-color: var(--c-border-hover);
+      color: var(--c-text);
+    }
+
+    @media (max-width: 640px) {
+      .modal {
+        padding: 20px;
+        width: 95%;
+      }
+
+      .modal .room-code {
+        font-size: 22px;
+        letter-spacing: 4px;
+      }
+    }
+
+    /* ── Fullscreen Prompt ─────────────────────── */
+    .fullscreen-prompt {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      cursor: pointer;
+    }
+    .fullscreen-prompt.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .fullscreen-prompt-card {
+      text-align: center;
+      color: var(--c-text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      pointer-events: none;
+    }
+    .fullscreen-prompt-card p {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 0;
+    }
+    .fullscreen-prompt-card span {
+      font-size: 13px;
+      color: var(--c-text-muted);
     }
   </style>
 </head>
@@ -725,6 +1121,7 @@
     <!-- Section 4: Playback Controls & View -->
     <div class="toolbar-section">
       <div class="ctrl-group">
+        <button id="btn-remote" class="icon-only remote-btn" title="远程控制"><i data-lucide="smartphone"></i><span class="status-dot"></span></button>
         <div class="dropdown-container">
           <button class="primary" id="btn-play" style="border-top-right-radius:0; border-bottom-right-radius:0; border-right:1px solid rgba(255,255,255,0.15);"><i data-lucide="play"></i> 开始</button>
           <button class="primary icon-only" id="btn-play-toggle" style="border-top-left-radius:0; border-bottom-left-radius:0; padding:5px; min-width:24px;" title="选择播放模式"><i data-lucide="chevron-down"></i></button>
@@ -750,6 +1147,35 @@
           <span class="toggle-label">自动隐藏</span>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Remote Control Modal -->
+  <div class="modal-overlay" id="remote-modal-overlay">
+    <div class="modal">
+      <h3><i data-lucide="smartphone"></i> 远程控制<button class="modal-close" id="btn-remote-close" title="关闭"><i data-lucide="x"></i></button></h3>
+      <div class="form-group">
+        <label class="form-label">服务器地址</label>
+        <input type="text" id="remote-server" placeholder="192.168.1.100:3456">
+      </div>
+      <div class="form-group">
+        <span class="form-label">房间代码 <button class="btn-refresh" id="btn-refresh-room" title="重新生成">换一个</button></span>
+        <div class="room-code" id="remote-room-code" title="点击复制">------</div>
+      </div>
+      <div class="btn-row">
+        <button id="btn-remote-connect" class="primary">连接</button>
+        <button id="btn-remote-disconnect" class="danger" style="display:none;">断开</button>
+      </div>
+      <div class="status-text" id="remote-status">未连接</div>
+    </div>
+  </div>
+
+  <!-- Fullscreen request prompt -->
+  <div class="fullscreen-prompt" id="fullscreen-prompt">
+    <div class="fullscreen-prompt-card">
+      <i data-lucide="maximize" style="width:32px;height:32px;color:var(--c-accent);"></i>
+      <p>远程请求全屏</p>
+      <span>点击任意位置确认</span>
     </div>
   </div>
 
@@ -1099,6 +1525,7 @@
 
         isAtBeginning = true;
         updatePlayButtons();
+        syncStateToRemote();
       }
 
       function applyTransform() {
@@ -1140,6 +1567,7 @@
         progressSlider.disabled = true;
         animationId = requestAnimationFrame(animate);
         updatePlayButtons();
+        syncStateToRemote();
       }
 
       function pause() {
@@ -1151,11 +1579,13 @@
         }
         progressSlider.disabled = false;
         updatePlayButtons();
+        syncStateToRemote();
       }
 
       function reset() {
         pause();
         measureAndResetPosition();
+        syncStateToRemote();
       }
 
       function togglePlay() {
@@ -1179,7 +1609,7 @@
         }
 
         btnPlay.innerHTML = `<i data-lucide="play"></i>${text}`;
-        
+
         btnPlay.disabled = isPlaying;
         btnPlayToggle.disabled = isPlaying;
 
@@ -1213,6 +1643,7 @@
         updateDisplayContent();
         updateDirectionUI();
         measureAndResetPosition();
+        syncStateToRemote();
       }
 
       function onFontSizeChange(delta) {
@@ -1231,6 +1662,7 @@
         position = progressToPosition(savedProgress);
         applyTransform();
         updateProgressSlider();
+        syncStateToRemote();
       }
 
       function onFontSizeInput() {
@@ -1240,16 +1672,19 @@
       function onSpeedChange(newSpeed) {
         speed = newSpeed;
         speedDisplay.textContent = speed;
+        syncStateToRemote();
       }
 
       function onFontColorChange(color) {
         fontColor = color;
         applyStyles();
+        syncStateToRemote();
       }
 
       function onBgColorChange(color) {
         bgColor = color;
         applyStyles();
+        syncStateToRemote();
       }
 
       function importFile(file) {
@@ -1268,10 +1703,8 @@
 
       function toggleFullscreen() {
         savedPositionBeforeFullscreen = position;
-        if (isPlaying) {
-          pause();
-        }
         if (document.fullscreenElement) {
+          if (isPlaying) pause();
           document.exitFullscreen();
         } else {
           document.documentElement.requestFullscreen();
@@ -1485,6 +1918,284 @@
             onFontSizeChange(2);
             break;
         }
+      });
+
+      // ── Remote Control (Host) ──────────────────────
+      const REMOTE_SERVER_KEY = 'teleprompter_remote_server';
+      const REMOTE_ROOM_KEY = 'teleprompter_remote_room';
+
+      let remoteWs = null;
+      let remoteConnected = false;
+      let remoteRoomCode = '';
+
+      function getRemoteServer() {
+        return localStorage.getItem(REMOTE_SERVER_KEY) || 'localhost:3456';
+      }
+
+      function setRemoteServer(addr) {
+        localStorage.setItem(REMOTE_SERVER_KEY, addr);
+      }
+
+      function getRemoteRoom() {
+        return localStorage.getItem(REMOTE_ROOM_KEY) || '';
+      }
+
+      function setRemoteRoom(code) {
+        localStorage.setItem(REMOTE_ROOM_KEY, code);
+      }
+
+      function generateRoomCode() {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        let code = '';
+        for (let i = 0; i < 6; i++) {
+          code += chars[Math.floor(Math.random() * chars.length)];
+        }
+        return code;
+      }
+
+      function getFullState() {
+        return {
+          isPlaying: isPlaying,
+          isAtBeginning: isAtBeginning,
+          playMode: playMode,
+          direction: direction,
+          speed: speed,
+          fontSize: fontSize,
+          fontColor: fontColor,
+          bgColor: bgColor,
+          text: textEditor.value,
+          progress: positionToProgress()
+        };
+      }
+
+      function syncStateToRemote() {
+        if (!remoteWs || remoteWs.readyState !== WebSocket.OPEN) return;
+        remoteWs.send(JSON.stringify({
+          type: 'state',
+          state: getFullState()
+        }));
+      }
+
+      function connectRemote() {
+        const server = document.getElementById('remote-server').value.trim() || 'localhost:3456';
+        setRemoteServer(server);
+
+        let code = document.getElementById('remote-room-code').textContent.trim();
+        if (!code || code === '------') {
+          code = generateRoomCode();
+        }
+        remoteRoomCode = code;
+        setRemoteRoom(code);
+        document.getElementById('remote-room-code').textContent = code;
+
+        const url = 'ws://' + server;
+        updateRemoteStatus('正在连接...');
+
+        try {
+          remoteWs = new WebSocket(url);
+        } catch (e) {
+          updateRemoteStatus('连接失败');
+          return;
+        }
+
+        remoteWs.onopen = function() {
+          remoteWs.send(JSON.stringify({
+            type: 'join',
+            room: remoteRoomCode,
+            role: 'host'
+          }));
+        };
+
+        remoteWs.onmessage = function(e) {
+          handleRemoteMessage(JSON.parse(e.data));
+        };
+
+        remoteWs.onclose = function() {
+          remoteConnected = false;
+          updateRemoteStatus('已断开');
+          updateRemoteUI();
+        };
+
+        remoteWs.onerror = function() {
+          updateRemoteStatus('连接错误');
+        };
+      }
+
+      function disconnectRemote() {
+        if (remoteWs) {
+          remoteWs.close();
+          remoteWs = null;
+        }
+        remoteConnected = false;
+        updateRemoteUI();
+        updateRemoteStatus('未连接');
+      }
+
+      function handleRemoteMessage(msg) {
+        switch (msg.type) {
+          case 'joined':
+            remoteConnected = true;
+            updateRemoteStatus('已连接');
+            updateRemoteUI();
+            syncStateToRemote();
+            break;
+          case 'peer-joined':
+            syncStateToRemote();
+            break;
+          case 'peer-left':
+            break;
+          case 'command':
+            executeRemoteCommand(msg.action, msg.value);
+            break;
+        }
+      }
+
+      function executeRemoteCommand(action, value) {
+        switch (action) {
+          case 'play':
+          case 'start':
+            start();
+            break;
+          case 'pause':
+            pause();
+            break;
+          case 'reset':
+            reset();
+            break;
+          case 'togglePlay':
+            togglePlay();
+            break;
+          case 'setSpeed':
+            onSpeedChange(Number(value));
+            speedSlider.value = speed;
+            break;
+          case 'setFontSize':
+            onFontSizeChange(value - fontSize);
+            break;
+          case 'setDirection':
+            onDirectionChange(value);
+            break;
+          case 'setFontColor':
+            onFontColorChange(value);
+            break;
+          case 'setBgColor':
+            onBgColorChange(value);
+            break;
+          case 'setText':
+            textEditor.value = value;
+            updateDisplayContent();
+            measureAndResetPosition();
+            break;
+          case 'setProgress':
+            if (!isPlaying) {
+              position = progressToPosition(Number(value));
+              applyTransform();
+              isAtBeginning = false;
+              updatePlayButtons();
+              updateProgressSlider();
+              syncStateToRemote();
+            }
+            break;
+          case 'fullscreen':
+            if (document.fullscreenElement) {
+              if (isPlaying) pause();
+              document.exitFullscreen();
+            } else {
+              document.getElementById('fullscreen-prompt').classList.add('show');
+            }
+            break;
+          case 'requestSync':
+            syncStateToRemote();
+            break;
+        }
+      }
+
+      function updateRemoteStatus(text) {
+        const el = document.getElementById('remote-status');
+        if (!el) return;
+        el.textContent = text;
+        el.classList.toggle('connected', text === '已连接');
+      }
+
+      function updateRemoteUI() {
+        const btnConnect = document.getElementById('btn-remote-connect');
+        const btnDisconnect = document.getElementById('btn-remote-disconnect');
+        const btnRemote = document.getElementById('btn-remote');
+
+        if (remoteConnected) {
+          if (btnConnect) btnConnect.style.display = 'none';
+          if (btnDisconnect) btnDisconnect.style.display = '';
+          if (btnRemote) btnRemote.classList.add('connected');
+        } else {
+          if (btnConnect) btnConnect.style.display = '';
+          if (btnDisconnect) btnDisconnect.style.display = 'none';
+          if (btnRemote) btnRemote.classList.remove('connected');
+        }
+      }
+
+      function showRemoteModal() {
+        document.getElementById('remote-server').value = getRemoteServer();
+        const savedRoom = getRemoteRoom();
+        document.getElementById('remote-room-code').textContent = savedRoom || generateRoomCode();
+        document.getElementById('remote-modal-overlay').classList.add('show');
+        updateRemoteUI();
+        updateRemoteStatus(remoteConnected ? '已连接' : '未连接');
+        safeCreateIcons();
+      }
+
+      function hideRemoteModal() {
+        document.getElementById('remote-modal-overlay').classList.remove('show');
+      }
+
+      // Remote control event bindings
+      document.getElementById('btn-remote').addEventListener('click', showRemoteModal);
+      document.getElementById('btn-remote-close').addEventListener('click', hideRemoteModal);
+
+      // Fullscreen prompt - requires user gesture
+      document.getElementById('fullscreen-prompt').addEventListener('click', function() {
+        this.classList.remove('show');
+        savedPositionBeforeFullscreen = position;
+        document.documentElement.requestFullscreen();
+      });
+
+      document.getElementById('remote-modal-overlay').addEventListener('click', function(e) {
+        if (e.target === this) hideRemoteModal();
+      });
+
+      document.getElementById('btn-remote-connect').addEventListener('click', connectRemote);
+      document.getElementById('btn-remote-disconnect').addEventListener('click', disconnectRemote);
+
+      document.getElementById('btn-refresh-room').addEventListener('click', function() {
+        const code = generateRoomCode();
+        setRemoteRoom(code);
+        remoteRoomCode = code;
+        document.getElementById('remote-room-code').textContent = code;
+      });
+
+      document.getElementById('remote-room-code').addEventListener('click', function() {
+        const code = this.textContent.trim();
+        if (code && code !== '------') {
+          navigator.clipboard.writeText(code).then(function() {
+            updateRemoteStatus('已复制');
+            setTimeout(function() {
+              updateRemoteStatus(remoteConnected ? '已连接' : '未连接');
+            }, 1500);
+          }).catch(function() {});
+        }
+      });
+
+      document.getElementById('remote-server').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') connectRemote();
+      });
+
+      // Sync text changes to remote (debounced)
+      let textSyncTimer = null;
+      textEditor.addEventListener('input', function() {
+        if (!remoteWs || remoteWs.readyState !== WebSocket.OPEN) return;
+        clearTimeout(textSyncTimer);
+        textSyncTimer = setTimeout(function() {
+          syncStateToRemote();
+        }, 500);
       });
 
       // ── Init ──────────────────────────────────────

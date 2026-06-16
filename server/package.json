@@ -1,0 +1,13 @@
+{
+  "name": "teleprompter-remote-server",
+  "version": "1.0.0",
+  "description": "WebSocket relay server for Teleprompter remote control",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "ws": "^8.21.0"
+  }
+}

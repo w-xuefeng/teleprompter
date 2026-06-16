@@ -1,10 +1,14 @@
-const CACHE_NAME = 'teleprompter-v1';
+const CACHE_NAME = 'teleprompter-v2';
 const ASSETS = [
   './',
   './index.html',
+  './remote-control.html',
+  './ctrl.html',
   './lucide-loader.js',
   './icon.svg',
-  './manifest.json'
+  './controller-icon.svg',
+  './manifest.json',
+  './remote-manifest.json'
 ];
 
 self.addEventListener('install', (e) => {

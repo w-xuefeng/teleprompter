@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="./remote-manifest.json">
+  <meta name="theme-color" content="#07080c">
+  <link rel="icon" href="./controller-icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./controller-icon.svg">
+  <title>Teleprompter Remote</title>
+  <script src="lucide-loader.js"></script>
+  <style>
+    :root {
+      --c-bg: #07080c;
+      --c-surface: rgba(13, 16, 24, 0.9);
+      --c-elevated: rgba(20, 24, 36, 0.95);
+      --c-border: rgba(255, 255, 255, 0.08);
+      --c-border-hover: rgba(0, 240, 255, 0.2);
+      --c-text: #e0e8f0;
+      --c-text-muted: #64748b;
+      --c-accent: #00f0ff;
+      --c-accent-glow: rgba(0, 240, 255, 0.25);
+      --c-accent-hover: #00c8d8;
+      --c-danger: #ff4d4d;
+      --c-success: #22c55e;
+      --radius: 10px;
+      --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--c-bg);
+      color: var(--c-text);
+      min-height: 100vh;
+      min-height: 100dvh;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    /* ── Connect Screen ─────────────────────────── */
+    .screen {
+      display: none;
+      flex-direction: column;
+      min-height: 100vh;
+      min-height: 100dvh;
+      padding: 24px 20px;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    .connect-screen {
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+    }
+
+    .connect-screen .logo {
+      text-align: center;
+    }
+
+    .connect-screen .logo svg {
+      width: 48px;
+      height: 48px;
+      color: var(--c-accent);
+      margin-bottom: 12px;
+    }
+
+    .connect-screen .logo h1 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .connect-screen .logo p {
+      font-size: 13px;
+      color: var(--c-text-muted);
+      margin-top: 4px;
+    }
+
+    .connect-card {
+      width: 100%;
+      margin: 50px auto;
+      max-width: 360px;
+      background: var(--c-elevated);
+      border: 1px solid var(--c-border);
+      border-radius: 14px;
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* .form-group {} */
+
+    .form-label {
+      display: block;
+      font-size: 11px;
+      color: var(--c-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 12px 14px;
+      background: var(--c-bg);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius);
+      color: var(--c-text);
+      font-size: 16px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color var(--transition);
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    .form-input:focus {
+      border-color: var(--c-accent);
+    }
+
+    .form-input.room-code {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 6px;
+      text-align: center;
+      text-transform: uppercase;
+      font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+    }
+
+    .form-input::placeholder {
+      color: rgba(255, 255, 255, 0.15);
+      font-weight: 400;
+      letter-spacing: 0;
+      font-size: 14px;
+      text-align: center;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 20px;
+      border-radius: var(--radius);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--c-border);
+      background: var(--c-surface);
+      color: var(--c-text);
+      transition: all var(--transition);
+      font-family: inherit;
+      -webkit-tap-highlight-color: transparent;
+      min-height: 48px;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn.primary {
+      background: var(--c-accent);
+      color: #000;
+      border-color: var(--c-accent);
+      width: 100%;
+    }
+
+    .btn.primary:active {
+      background: var(--c-accent-hover);
+    }
+
+    .connect-hint {
+      font-size: 12px;
+      color: var(--c-text-muted);
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    /* ── Control Screen ──────────────────────────── */
+    .control-screen {
+      padding: 0;
+      gap: 0;
+    }
+
+    /* Top Bar */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: var(--c-elevated);
+      border-bottom: 1px solid var(--c-border);
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .topbar .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .topbar .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--c-success);
+    }
+
+    .topbar .room-label {
+      font-size: 11px;
+      color: var(--c-text-muted);
+    }
+
+    .topbar .room-code-display {
+      font-size: 13px;
+      font-weight: 600;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      letter-spacing: 2px;
+      color: var(--c-accent);
+    }
+
+    .btn-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius);
+      border: 1px solid var(--c-border);
+      background: var(--c-surface);
+      color: var(--c-text);
+      cursor: pointer;
+      transition: all var(--transition);
+      flex-shrink: 0;
+    }
+
+    .btn-icon:active {
+      transform: scale(0.94);
+      background: var(--c-elevated);
+    }
+
+    .btn-icon.danger {
+      border-color: rgba(255, 77, 77, 0.3);
+      color: var(--c-danger);
+    }
+
+    /* Scrollable Content */
+    .control-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Card */
+    .card {
+      background: var(--c-elevated);
+      border: 1px solid var(--c-border);
+      border-radius: 14px;
+      padding: 18px 16px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--c-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 14px;
+    }
+
+    /* Playback */
+    .playback-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .btn-play {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: var(--c-accent);
+      color: #000;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all var(--transition);
+      box-shadow: 0 0 24px var(--c-accent-glow);
+    }
+
+    .btn-play:active {
+      transform: scale(0.94);
+      box-shadow: 0 0 32px var(--c-accent-glow);
+    }
+
+    .btn-play.paused {
+      background: var(--c-surface);
+      color: var(--c-text);
+      box-shadow: none;
+      border: 2px solid var(--c-border);
+    }
+
+    .btn-action {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: 1px solid var(--c-border);
+      background: var(--c-surface);
+      color: var(--c-text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .btn-action:active {
+      transform: scale(0.94);
+    }
+
+    .btn-action.danger {
+      border-color: rgba(255, 77, 77, 0.3);
+      color: var(--c-danger);
+    }
+
+    /* Speed */
+    .speed-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .speed-row input[type="range"] {
+      flex: 1;
+      -webkit-appearance: none;
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.1);
+      outline: none;
+    }
+
+    .speed-row input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--c-accent);
+      cursor: pointer;
+      border: 2px solid var(--c-bg);
+    }
+
+    .speed-value {
+      font-size: 18px;
+      font-weight: 700;
+      min-width: 48px;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Direction Grid */
+    .direction-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .dir-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--c-border);
+      background: var(--c-surface);
+      color: var(--c-text);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--transition);
+      font-family: inherit;
+    }
+
+    .dir-btn:active {
+      transform: scale(0.97);
+    }
+
+    .dir-btn.active {
+      border-color: var(--c-accent);
+      background: rgba(0, 240, 255, 0.1);
+      color: var(--c-accent);
+    }
+
+    /* Font Size */
+    .fontsize-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    .fontsize-value {
+      font-size: 28px;
+      font-weight: 700;
+      min-width: 56px;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .btn-circle {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1px solid var(--c-border);
+      background: var(--c-surface);
+      color: var(--c-text);
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition);
+      font-family: inherit;
+    }
+
+    .btn-circle:active {
+      transform: scale(0.94);
+      background: var(--c-elevated);
+    }
+
+    /* Color Pickers */
+    .color-row {
+      display: flex;
+      gap: 16px;
+    }
+
+    .color-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .color-label {
+      font-size: 11px;
+      color: var(--c-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    input[type="color"] {
+      -webkit-appearance: none;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 2px solid var(--c-border);
+      cursor: pointer;
+      background: none;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    input[type="color"]::-webkit-color-swatch-wrapper {
+      padding: 0;
+    }
+
+    input[type="color"]::-webkit-color-swatch {
+      border-radius: 50%;
+      border: none;
+    }
+
+    /* Text Editor */
+    .text-editor-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+    }
+
+    .text-editor-area {
+      margin-top: 12px;
+      display: none;
+    }
+
+    .text-editor-area.open {
+      display: block;
+    }
+
+    .text-editor-area textarea {
+      width: 100%;
+      height: 200px;
+      padding: 12px;
+      background: var(--c-bg);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius);
+      color: var(--c-text);
+      font-size: 15px;
+      font-family: inherit;
+      line-height: 1.6;
+      resize: vertical;
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    .text-editor-area textarea:focus {
+      border-color: var(--c-accent);
+    }
+
+    /* Disconnected Overlay */
+    .disconnected-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .disconnected-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .disconnected-overlay .msg {
+      font-size: 16px;
+      font-weight: 500;
+      text-align: center;
+      padding: 0 24px;
+    }
+
+    /* Progress */
+    .progress-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .progress-row input[type="range"] {
+      flex: 1;
+      -webkit-appearance: none;
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.1);
+      outline: none;
+    }
+
+    .progress-row input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--c-accent);
+      cursor: pointer;
+      border: 2px solid var(--c-bg);
+    }
+
+    .progress-text {
+      font-size: 12px;
+      color: var(--c-text-muted);
+      min-width: 36px;
+      text-align: center;
+    }
+
+    /* Landscape phone tweaks */
+    @media (min-width: 480px) {
+      .control-content {
+        max-width: 480px;
+        margin: 0 auto;
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Connect Screen -->
+  <div class="screen active" id="connect-screen">
+    <div class="connect-screen">
+      <div class="logo">
+        <i data-lucide="smartphone" style="width:48px;height:48px;color:var(--c-accent);"></i>
+        <h1>提词器遥控器</h1>
+        <p>连接到电脑上的 Teleprompter</p>
+      </div>
+      <div class="connect-card">
+        <div class="form-group">
+          <label class="form-label">服务器地址</label>
+          <input type="text" class="form-input" id="server-addr" placeholder="192.168.1.100:3456" inputmode="url" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label class="form-label">房间代码</label>
+          <input type="text" class="form-input room-code" id="room-input" placeholder="输入代码" maxlength="6" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
+        </div>
+        <button class="btn primary" id="btn-connect">
+          <i data-lucide="link"></i> 连接
+        </button>
+        <p class="connect-hint">在电脑端点击「远程控制」按钮获取房间代码</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Control Screen -->
+  <div class="screen" id="control-screen">
+    <div class="control-screen">
+      <!-- Top Bar -->
+      <div class="topbar">
+        <div class="status-badge">
+          <span class="status-dot"></span>
+          <span>已连接</span>
+        </div>
+        <div style="text-align:center;">
+          <div class="room-label">房间</div>
+          <div class="room-code-display" id="room-display">------</div>
+        </div>
+        <button class="btn-icon danger" id="btn-disconnect" title="断开连接">
+          <i data-lucide="log-out"></i>
+        </button>
+      </div>
+
+      <!-- Control Content -->
+      <div class="control-content">
+        <!-- Playback -->
+        <div class="card">
+          <div class="progress-row" style="margin-bottom:14px;">
+            <input type="range" id="progress-slider" min="0" max="1000" value="0" step="1">
+            <span class="progress-text" id="progress-text">0%</span>
+          </div>
+          <div class="playback-row">
+            <button class="btn-action danger" id="btn-reset" title="重置">
+              <i data-lucide="rotate-ccw"></i>
+            </button>
+            <button class="btn-play paused" id="btn-play" title="播放 / 暂停">
+              <i data-lucide="play" style="width:32px;height:32px;"></i>
+            </button>
+            <button class="btn-action" id="btn-fullscreen" title="全屏">
+              <i data-lucide="maximize"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Speed -->
+        <div class="card">
+          <div class="card-header"><i data-lucide="gauge"></i> 速度</div>
+          <div class="speed-row">
+            <input type="range" id="speed-slider" min="10" max="500" value="60" step="5">
+            <span class="speed-value" id="speed-display">60</span>
+          </div>
+        </div>
+
+        <!-- Direction -->
+        <div class="card">
+          <div class="card-header"><i data-lucide="move"></i> 方向</div>
+          <div class="direction-grid">
+            <button class="dir-btn active" data-dir="bottom-up">
+              <i data-lucide="arrow-up"></i> 从下往上
+            </button>
+            <button class="dir-btn" data-dir="top-down">
+              <i data-lucide="arrow-down"></i> 从上往下
+            </button>
+            <button class="dir-btn" data-dir="right-left">
+              <i data-lucide="arrow-left"></i> 从右往左
+            </button>
+            <button class="dir-btn" data-dir="left-right">
+              <i data-lucide="arrow-right"></i> 从左往右
+            </button>
+          </div>
+        </div>
+
+        <!-- Appearance -->
+        <div class="card">
+          <div class="card-header"><i data-lucide="palette"></i> 外观</div>
+          <div class="fontsize-row" style="margin-bottom:16px;">
+            <button class="btn-circle" id="btn-font-dec">&minus;</button>
+            <span class="fontsize-value" id="fontsize-display">36</span>
+            <button class="btn-circle" id="btn-font-inc">+</button>
+          </div>
+          <div class="color-row">
+            <div class="color-item">
+              <input type="color" id="font-color" value="#ffffff">
+              <span class="color-label">文字色</span>
+            </div>
+            <div class="color-item">
+              <input type="color" id="bg-color" value="#000000">
+              <span class="color-label">背景色</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Text Editor -->
+        <div class="card">
+          <div class="text-editor-toggle" id="text-editor-toggle">
+            <span class="card-header" style="margin-bottom:0;"><i data-lucide="file-text"></i> 编辑文本</span>
+            <i data-lucide="chevron-down" id="editor-chevron"></i>
+          </div>
+          <div class="text-editor-area" id="text-editor-area">
+            <textarea id="text-editor" placeholder="在此编辑提词内容..."></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Disconnected Overlay -->
+  <div class="disconnected-overlay" id="disconnected-overlay">
+    <i data-lucide="wifi-off" style="width:40px;height:40px;color:var(--c-danger);"></i>
+    <div class="msg">连接已断开</div>
+    <button class="btn primary" id="btn-reconnect" style="width:auto;padding:12px 32px;">
+      <i data-lucide="refresh-cw"></i> 重新连接
+    </button>
+  </div>
+
+  <script>
+    (function() {
+      const SERVER_KEY = 'trc_server_addr';
+      const ROOM_KEY = 'trc_room_code';
+
+      // ── DOM refs ──────────────────────────────────
+      const connectScreen = document.getElementById('connect-screen');
+      const controlScreen = document.getElementById('control-screen');
+      const serverAddr = document.getElementById('server-addr');
+      const roomInput = document.getElementById('room-input');
+      const btnConnect = document.getElementById('btn-connect');
+      const btnDisconnect = document.getElementById('btn-disconnect');
+      const btnReconnect = document.getElementById('btn-reconnect');
+      const roomDisplay = document.getElementById('room-display');
+      const disconnectedOverlay = document.getElementById('disconnected-overlay');
+      const btnPlay = document.getElementById('btn-play');
+      const btnReset = document.getElementById('btn-reset');
+      const btnFullscreen = document.getElementById('btn-fullscreen');
+      const speedSlider = document.getElementById('speed-slider');
+      const speedDisplay = document.getElementById('speed-display');
+      const progressSlider = document.getElementById('progress-slider');
+      const progressText = document.getElementById('progress-text');
+      const fontSizeDisplay = document.getElementById('fontsize-display');
+      const fontColorInput = document.getElementById('font-color');
+      const bgColorInput = document.getElementById('bg-color');
+      const textEditor = document.getElementById('text-editor');
+      const textEditorArea = document.getElementById('text-editor-area');
+      const textEditorToggle = document.getElementById('text-editor-toggle');
+      const editorChevron = document.getElementById('editor-chevron');
+      const dirBtns = document.querySelectorAll('.dir-btn');
+
+      // ── State ─────────────────────────────────────
+      let ws = null;
+      let connected = false;
+      let currentState = {
+        isPlaying: false,
+        direction: 'bottom-up',
+        speed: 60,
+        fontSize: 36,
+        fontColor: '#ffffff',
+        bgColor: '#000000',
+        text: '',
+        progress: 0
+      };
+
+      // ── Persistence ───────────────────────────────
+      function loadSettings() {
+        serverAddr.value = localStorage.getItem(SERVER_KEY) || '';
+        roomInput.value = localStorage.getItem(ROOM_KEY) || '';
+      }
+
+      function saveSettings() {
+        localStorage.setItem(SERVER_KEY, serverAddr.value.trim());
+        localStorage.setItem(ROOM_KEY, roomInput.value.trim().toUpperCase());
+      }
+
+      // ── Connection ────────────────────────────────
+      function connect() {
+        var server = serverAddr.value.trim();
+        var room = roomInput.value.trim().toUpperCase();
+
+        if (!server) {
+          alert('请输入服务器地址');
+          return;
+        }
+        if (!room || room.length < 4) {
+          alert('请输入房间代码（至少4位）');
+          return;
+        }
+
+        saveSettings();
+
+        var url = 'ws://' + server;
+        connectScreen.classList.remove('active');
+        controlScreen.classList.add('active');
+        roomDisplay.textContent = room;
+        disconnectedOverlay.classList.remove('show');
+
+        try {
+          ws = new WebSocket(url);
+        } catch (e) {
+          onDisconnected();
+          return;
+        }
+
+        ws.onopen = function() {
+          ws.send(JSON.stringify({
+            type: 'join',
+            room: room,
+            role: 'remote'
+          }));
+        };
+
+        ws.onmessage = function(e) {
+          handleMessage(JSON.parse(e.data));
+        };
+
+        ws.onclose = function() {
+          if (connected) onDisconnected();
+        };
+
+        ws.onerror = function() {};
+      }
+
+      function disconnect() {
+        if (ws) {
+          ws.close();
+          ws = null;
+        }
+        connected = false;
+        connectScreen.classList.add('active');
+        controlScreen.classList.remove('active');
+        disconnectedOverlay.classList.remove('show');
+        safeCreateIcons();
+      }
+
+      function onDisconnected() {
+        connected = false;
+        disconnectedOverlay.classList.add('show');
+      }
+
+      function sendCommand(action, value) {
+        if (!ws || ws.readyState !== WebSocket.OPEN) return;
+        ws.send(JSON.stringify({
+          type: 'command',
+          action: action,
+          value: value
+        }));
+      }
+
+      // ── Message Handler ───────────────────────────
+      function handleMessage(msg) {
+        switch (msg.type) {
+          case 'joined':
+            connected = true;
+            disconnectedOverlay.classList.remove('show');
+            break;
+
+          case 'state':
+            applyState(msg.state);
+            break;
+
+          case 'peer-left':
+            onDisconnected();
+            break;
+        }
+      }
+
+      function applyState(state) {
+        currentState = state;
+        updateUI();
+      }
+
+      // ── UI Update ─────────────────────────────────
+      function updateUI() {
+        var s = currentState;
+
+        // Play button
+        var playIcon = btnPlay.querySelector('[data-lucide]');
+        if (s.isPlaying) {
+          btnPlay.classList.remove('paused');
+          if (playIcon) playIcon.setAttribute('data-lucide', 'pause');
+        } else {
+          btnPlay.classList.add('paused');
+          if (playIcon) playIcon.setAttribute('data-lucide', 'play');
+        }
+
+        // Speed
+        speedSlider.value = s.speed;
+        speedDisplay.textContent = s.speed;
+
+        // Progress
+        progressSlider.value = Math.round(s.progress || 0);
+        progressSlider.disabled = s.isPlaying;
+        progressText.textContent = Math.round((s.progress || 0) / 10) + '%';
+
+        // Direction
+        dirBtns.forEach(function(btn) {
+          btn.classList.toggle('active', btn.dataset.dir === s.direction);
+        });
+
+        // Font size
+        fontSizeDisplay.textContent = s.fontSize;
+
+        // Colors
+        fontColorInput.value = s.fontColor;
+        bgColorInput.value = s.bgColor;
+
+        // Text (only if not currently focused)
+        if (document.activeElement !== textEditor) {
+          textEditor.value = s.text || '';
+        }
+
+        safeCreateIcons();
+      }
+
+      function safeCreateIcons() {
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+      }
+
+      // ── Event Bindings ────────────────────────────
+      btnConnect.addEventListener('click', connect);
+
+      roomInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') connect();
+      });
+
+      // Auto-uppercase room code
+      roomInput.addEventListener('input', function() {
+        var cursor = roomInput.selectionStart;
+        roomInput.value = roomInput.value.toUpperCase();
+        roomInput.setSelectionRange(cursor, cursor);
+      });
+
+      btnDisconnect.addEventListener('click', disconnect);
+      btnReconnect.addEventListener('click', function() {
+        disconnectedOverlay.classList.remove('show');
+        if (ws) {
+          ws.close();
+          ws = null;
+        }
+        // Reconnect with saved settings
+        serverAddr.value = localStorage.getItem(SERVER_KEY) || '';
+        roomInput.value = localStorage.getItem(ROOM_KEY) || '';
+        connect();
+      });
+
+      // Playback
+      btnPlay.addEventListener('click', function() {
+        sendCommand('togglePlay');
+      });
+
+      btnReset.addEventListener('click', function() {
+        if (confirm('确定要重置播放位置吗？')) {
+          sendCommand('reset');
+        }
+      });
+
+      btnFullscreen.addEventListener('click', function() {
+        sendCommand('fullscreen');
+      });
+
+      // Speed
+      speedSlider.addEventListener('input', function() {
+        var val = Number(speedSlider.value);
+        speedDisplay.textContent = val;
+      });
+      speedSlider.addEventListener('change', function() {
+        sendCommand('setSpeed', Number(speedSlider.value));
+      });
+
+      // Progress
+      progressSlider.addEventListener('input', function() {
+        progressText.textContent = Math.round(Number(progressSlider.value) / 10) + '%';
+      });
+      progressSlider.addEventListener('change', function() {
+        // Send progress as a position command
+        sendCommand('setProgress', Number(progressSlider.value));
+      });
+
+      // Direction
+      dirBtns.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var dir = btn.dataset.dir;
+          dirBtns.forEach(function(b) {
+            b.classList.remove('active');
+          });
+          btn.classList.add('active');
+          sendCommand('setDirection', dir);
+        });
+      });
+
+      // Font size
+      document.getElementById('btn-font-inc').addEventListener('click', function() {
+        var newSize = (currentState.fontSize || 36) + 2;
+        sendCommand('setFontSize', newSize);
+      });
+      document.getElementById('btn-font-dec').addEventListener('click', function() {
+        var newSize = Math.max(1, (currentState.fontSize || 36) - 2);
+        sendCommand('setFontSize', newSize);
+      });
+
+      // Colors
+      fontColorInput.addEventListener('input', function() {
+        sendCommand('setFontColor', fontColorInput.value);
+      });
+      bgColorInput.addEventListener('input', function() {
+        sendCommand('setBgColor', bgColorInput.value);
+      });
+
+      // Text editor toggle
+      textEditorToggle.addEventListener('click', function() {
+        var isOpen = textEditorArea.classList.toggle('open');
+        if (editorChevron) {
+          editorChevron.setAttribute('data-lucide', isOpen ? 'chevron-up' : 'chevron-down');
+          safeCreateIcons();
+        }
+      });
+
+      // Text editor - debounced sync
+      var textSyncTimer = null;
+      textEditor.addEventListener('input', function() {
+        clearTimeout(textSyncTimer);
+        textSyncTimer = setTimeout(function() {
+          sendCommand('setText', textEditor.value);
+        }, 400);
+      });
+
+      // ── Init ──────────────────────────────────────
+      function init() {
+        loadSettings();
+        safeCreateIcons();
+      }
+
+      window._onLucideReady(init);
+    })();
+  </script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('./sw.js')
+          .then(function(reg) { console.log('SW registered:', reg.scope); })
+          .catch(function(err) { console.log('SW registration failed:', err); });
+      });
+    }
+  </script>
+</body>
+
+</html>

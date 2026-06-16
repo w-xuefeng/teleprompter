@@ -1,0 +1,18 @@
+{
+  "name": "Teleprompter Remote - 提词器遥控器",
+  "short_name": "提词器遥控",
+  "description": "Teleprompter 提词器的移动端遥控器，支持远程控制播放、暂停、速度、方向、字体等全部功能。",
+  "start_url": "./remote-control.html",
+  "display": "standalone",
+  "background_color": "#07080c",
+  "theme_color": "#07080c",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "./controller-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
