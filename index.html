@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Teleprompter - 一个高颜值、功能丰富的浏览器端提词器，支持多种滚动方向、速度调节、字体和背景自定义，以及预设管理。">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <title>Teleprompter - 提词器</title>
+  <script src="lucide-loader.js"></script>
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ===== Toolbar ===== */
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 10px 16px;
+      background: rgba(22, 22, 42, 0.97);
+      border-bottom: 1px solid #2a2a4a;
+      align-items: center;
+      z-index: 10;
+      flex-shrink: 0;
+    }
+
+    .ctrl-group {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .ctrl-label {
+      font-size: 11px;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 5px 12px;
+      border: 1px solid #444;
+      border-radius: 6px;
+      background: #252540;
+      color: #ddd;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.15s;
+      white-space: nowrap;
+      user-select: none;
+      font-family: inherit;
+      vertical-align: middle;
+    }
+
+    button:hover {
+      background: #333358;
+      border-color: #666;
+    }
+
+    button:active {
+      transform: scale(0.96);
+    }
+
+    button svg {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+    }
+
+    button.icon-only {
+      padding: 5px 8px;
+    }
+
+    button.icon-only svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    button.active {
+      background: #4a7cff;
+      border-color: #4a7cff;
+      color: #fff;
+    }
+
+    button.primary {
+      background: #4a7cff;
+      border-color: #4a7cff;
+      color: #fff;
+      font-weight: 600;
+    }
+
+    button.primary:hover {
+      background: #5d8aff;
+    }
+
+    button.warn {
+      background: #c0392b;
+      border-color: #c0392b;
+      color: #fff;
+    }
+
+    button.warn:hover {
+      background: #d44637;
+    }
+
+    input[type="color"] {
+      width: 30px;
+      height: 30px;
+      border: 1px solid #444;
+      border-radius: 4px;
+      cursor: pointer;
+      background: transparent;
+      padding: 2px;
+    }
+
+    input[type="color"]::-webkit-color-swatch-wrapper {
+      padding: 0;
+    }
+
+    input[type="color"]::-webkit-color-swatch {
+      border: none;
+      border-radius: 2px;
+    }
+
+    input[type="range"] {
+      width: 80px;
+      height: 4px;
+      cursor: pointer;
+      accent-color: #4a7cff;
+    }
+
+    .preset-name-input {
+      width: 110px;
+      padding: 5px 8px;
+      border: 1px solid #444;
+      border-radius: 6px;
+      background: #1a1a30;
+      color: #ddd;
+      font-size: 12px;
+      font-family: inherit;
+      text-align: center;
+    }
+
+    .preset-name-input:focus {
+      outline: none;
+      border-color: #4a7cff;
+    }
+
+    .preset-select {
+      padding: 5px 8px;
+      border: 1px solid #444;
+      border-radius: 6px;
+      background: #252540;
+      color: #ddd;
+      font-size: 12px;
+      cursor: pointer;
+      max-width: 120px;
+      font-family: inherit;
+    }
+
+    .preset-select:focus {
+      outline: none;
+      border-color: #4a7cff;
+    }
+
+    .preset-select option {
+      background: #1a1a30;
+      color: #ddd;
+    }
+
+    .font-size-input {
+      width: 48px;
+      padding: 5px 4px;
+      border: 1px solid #444;
+      border-radius: 6px;
+      background: #1a1a30;
+      color: #ddd;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: inherit;
+      text-align: center;
+    }
+
+    .font-size-input:focus {
+      outline: none;
+      border-color: #4a7cff;
+    }
+
+    /* hide number input spinners */
+    .font-size-input::-webkit-inner-spin-button,
+    .font-size-input::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .font-size-input[type=number] {
+      -moz-appearance: textfield;
+    }
+
+    .separator {
+      width: 1px;
+      height: 22px;
+      background: #333;
+      margin: 0 2px;
+      flex-shrink: 0;
+    }
+
+    #import-file {
+      display: none;
+    }
+
+    /* ===== Display Area ===== */
+    .display-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      min-height: 150px;
+    }
+
+    .display-content {
+      position: absolute;
+      top: 0;
+      left: 0;
+      padding: 60px 80px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      will-change: transform;
+      line-height: 1.7;
+    }
+
+    .display-content.horizontal-mode {
+      white-space: nowrap;
+      padding: 0 80px;
+      display: flex;
+      align-items: center;
+      height: 100%;
+      word-break: normal;
+    }
+
+    /* Edge fades */
+    .fade-top,
+    .fade-bottom,
+    .fade-left,
+    .fade-right {
+      position: absolute;
+      pointer-events: none;
+      z-index: 2;
+      transition: opacity 0.3s;
+    }
+
+    .fade-top {
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 80px;
+      background: linear-gradient(to bottom, var(--bg, #000), transparent);
+    }
+
+    .fade-bottom {
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 80px;
+      background: linear-gradient(to top, var(--bg, #000), transparent);
+    }
+
+    .fade-left {
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 80px;
+      background: linear-gradient(to right, var(--bg, #000), transparent);
+    }
+
+    .fade-right {
+      top: 0;
+      bottom: 0;
+      right: 0;
+      width: 80px;
+      background: linear-gradient(to left, var(--bg, #000), transparent);
+    }
+
+    /* ===== Editor Panel ===== */
+    .editor-panel {
+      flex-shrink: 0;
+      border-top: 1px solid #2a2a4a;
+      background: rgba(22, 22, 42, 0.97);
+      padding: 8px 16px 10px;
+    }
+
+    .editor-panel .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .editor-panel .panel-title {
+      font-size: 11px;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .editor-panel textarea {
+      width: 100%;
+      height: 90px;
+      background: #111122;
+      color: #bbb;
+      border: 1px solid #333;
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-size: 14px;
+      font-family: inherit;
+      resize: vertical;
+      line-height: 1.6;
+      transition: border-color 0.2s;
+    }
+
+    .editor-panel textarea:focus {
+      outline: none;
+      border-color: #4a7cff;
+    }
+
+    /* ===== Fullscreen ===== */
+    body.fullscreen .toolbar {
+      padding: 6px 12px;
+      gap: 6px;
+      opacity: 0.85;
+      transition: opacity 0.3s, transform 0.3s;
+    }
+
+    body.fullscreen .toolbar:hover {
+      opacity: 1;
+    }
+
+    body.fullscreen .editor-panel {
+      display: none;
+    }
+
+    body.fullscreen .display-content {
+      padding: 60px 120px;
+    }
+
+    body.fullscreen .display-content.horizontal-mode {
+      padding: 0 120px;
+    }
+
+    /* auto-hide toolbar in fullscreen */
+    body.fullscreen.auto-hide .toolbar {
+      opacity: 0;
+      pointer-events: none;
+      margin-block-start: calc(-1 * var(--toolbar-h, 42px));
+      transition: margin-block-start 0.3s, opacity 0.3s;
+    }
+
+    body.fullscreen.auto-hide .toolbar.visible {
+      opacity: 0.95;
+      pointer-events: auto;
+      margin-block-start: 0;
+    }
+
+    /* Toggle switch */
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 36px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    .toggle-switch input {
+      display: none;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: #444;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      left: 3px;
+      bottom: 3px;
+      background: #ddd;
+      border-radius: 50%;
+      transition: transform 0.2s;
+    }
+
+    .toggle-switch input:checked+.toggle-slider {
+      background: #4a7cff;
+    }
+
+    .toggle-switch input:checked+.toggle-slider::before {
+      transform: translateX(16px);
+    }
+
+    .toggle-label {
+      font-size: 11px;
+      color: #aaa;
+      white-space: nowrap;
+      user-select: none;
+      cursor: pointer;
+      line-height: 1.3;
+      text-align: center;
+    }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 768px) {
+      .toolbar {
+        gap: 6px;
+        padding: 8px 10px;
+      }
+
+      button {
+        padding: 4px 8px;
+        font-size: 11px;
+      }
+
+      .display-content {
+        padding: 30px 24px;
+      }
+
+      .display-content.horizontal-mode {
+        padding: 0 24px;
+      }
+
+      .separator {
+        margin: 0;
+      }
+
+      .ctrl-label {
+        font-size: 10px;
+      }
+
+      input[type="range"] {
+        width: 50px;
+      }
+
+      .fade-top,
+      .fade-bottom {
+        height: 40px;
+      }
+
+      .fade-left,
+      .fade-right {
+        width: 40px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Toolbar -->
+  <div class="toolbar" id="toolbar">
+    <div class="ctrl-group">
+      <button id="btn-import" class="icon-only" title="导入文本"><i data-lucide="file-up"></i></button>
+      <input type="file" id="import-file" accept=".txt">
+      <button id="btn-fullscreen" class="icon-only" title="全屏"><i data-lucide="maximize"></i></button>
+      <button id="btn-fullscreen-play" class="primary" title="全屏并开始播放"><i data-lucide="play"></i> 全屏开始</button>
+      <label class="toggle-switch" title="全屏时自动隐藏工具栏，鼠标移到顶部显示">
+        <input type="checkbox" id="toggle-auto-hide">
+        <span class="toggle-slider"></span>
+      </label>
+      <span class="toggle-label">全屏自动隐藏<br>工具栏</span>
+    </div>
+
+    <div class="separator"></div>
+
+    <div class="ctrl-group">
+      <span class="ctrl-label">字号</span>
+      <button id="btn-font-dec" class="icon-only" title="缩小字号"><i data-lucide="minus"></i></button>
+      <input type="text" inputmode="numeric" class="font-size-input" id="font-size-input" value="36">
+      <button id="btn-font-inc" class="icon-only" title="放大字号"><i data-lucide="plus"></i></button>
+    </div>
+
+    <div class="separator"></div>
+
+    <div class="ctrl-group">
+      <span class="ctrl-label">文字色</span>
+      <input type="color" id="font-color" value="#ffffff">
+    </div>
+
+    <div class="ctrl-group">
+      <span class="ctrl-label">背景色</span>
+      <input type="color" id="bg-color" value="#000000">
+    </div>
+
+    <div class="separator"></div>
+
+    <div class="ctrl-group">
+      <span class="ctrl-label">方向</span>
+      <button class="direction-btn icon-only active" data-dir="bottom-up" title="从下往上"><i data-lucide="arrow-up"></i></button>
+      <button class="direction-btn icon-only" data-dir="top-down" title="从上往下"><i data-lucide="arrow-down"></i></button>
+      <button class="direction-btn icon-only" data-dir="right-left" title="从右往左"><i data-lucide="arrow-left"></i></button>
+      <button class="direction-btn icon-only" data-dir="left-right" title="从左往右"><i data-lucide="arrow-right"></i></button>
+    </div>
+
+    <div class="separator"></div>
+
+    <div class="ctrl-group">
+      <span class="ctrl-label">速度</span>
+      <input type="range" id="speed-slider" min="10" max="500" value="60" step="5">
+      <span id="speed-display" style="font-size:12px;min-width:30px;">60</span>
+    </div>
+
+    <div class="separator"></div>
+
+    <div class="ctrl-group">
+      <span class="ctrl-label">预设</span>
+      <input type="text" class="preset-name-input" id="preset-name" value="" placeholder="预设名称">
+      <button id="btn-save-preset" class="icon-only" title="保存当前设置"><i data-lucide="save"></i></button>
+      <select class="preset-select" id="preset-select" title="加载预设">
+        <option value="">-- 加载 --</option>
+      </select>
+      <button id="btn-delete-preset" class="icon-only" title="删除当前预设"><i data-lucide="trash-2"></i></button>
+    </div>
+
+    <div class="separator"></div>
+
+    <div class="ctrl-group">
+      <button class="primary" id="btn-play"><i data-lucide="play"></i> 开始</button>
+      <button id="btn-pause" class="icon-only" title="暂停"><i data-lucide="pause"></i></button>
+      <button class="warn icon-only" id="btn-reset" title="重置"><i data-lucide="rotate-ccw"></i></button>
+    </div>
+  </div>
+
+  <!-- Display Area -->
+  <div class="display-container" id="display-container">
+    <div class="fade-top" id="fade-top"></div>
+    <div class="fade-bottom" id="fade-bottom"></div>
+    <div class="fade-left" id="fade-left" style="opacity:0"></div>
+    <div class="fade-right" id="fade-right" style="opacity:0"></div>
+    <div class="display-content" id="display-content"></div>
+  </div>
+
+  <!-- Editor Panel -->
+  <div class="editor-panel" id="editor-panel">
+    <div class="panel-header">
+      <span class="panel-title">编辑提词内容</span>
+      <button id="btn-clear" class="icon-only" title="清空内容" style="padding:3px 6px;"><i data-lucide="trash-2"></i></button>
+    </div>
+    <textarea id="text-editor" placeholder="在此粘贴或编辑提词内容..."></textarea>
+  </div>
+
+  <script>
+    (function() {
+      // ── DOM refs ──────────────────────────────────
+      const displayContainer = document.getElementById('display-container');
+      const displayContent = document.getElementById('display-content');
+      const textEditor = document.getElementById('text-editor');
+      const speedSlider = document.getElementById('speed-slider');
+      const speedDisplay = document.getElementById('speed-display');
+      const fontSizeInput = document.getElementById('font-size-input');
+      const fontColorInput = document.getElementById('font-color');
+      const bgColorInput = document.getElementById('bg-color');
+      const fadeTop = document.getElementById('fade-top');
+      const fadeBottom = document.getElementById('fade-bottom');
+      const fadeLeft = document.getElementById('fade-left');
+      const fadeRight = document.getElementById('fade-right');
+
+      // ── State ─────────────────────────────────────
+      let isPlaying = false;
+      let direction = 'bottom-up';
+      let speed = 60; // px/s
+      let fontSize = 36; // px
+      let fontColor = '#ffffff';
+      let bgColor = '#000000';
+      let position = 0;
+      let animationId = null;
+      let lastTime = 0;
+      let currentPresetName = '';
+
+      const PRESETS_KEY = 'teleprompter_presets';
+      const LAST_PRESET_KEY = 'teleprompter_last_preset';
+
+      // ── Preset management ──────────────────────────
+      function getPresets() {
+        try {
+          return JSON.parse(localStorage.getItem(PRESETS_KEY)) || {};
+        } catch (e) {
+          return {};
+        }
+      }
+
+      function savePresets(presets) {
+        localStorage.setItem(PRESETS_KEY, JSON.stringify(presets));
+      }
+
+      function getCurrentSettings() {
+        return {
+          fontSize,
+          fontColor,
+          bgColor,
+          direction,
+          speed
+        };
+      }
+
+      function applySettings(s) {
+        fontSize = s.fontSize;
+        fontColor = s.fontColor;
+        bgColor = s.bgColor;
+        direction = s.direction;
+        speed = s.speed;
+
+        fontSizeInput.value = fontSize;
+        fontColorInput.value = fontColor;
+        bgColorInput.value = bgColor;
+        speedSlider.value = speed;
+        speedDisplay.textContent = speed;
+
+        document.querySelectorAll('.direction-btn').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.dir === direction);
+        });
+
+        applyStyles();
+        updateDirectionUI();
+        updateDisplayContent();
+        measureAndResetPosition();
+      }
+
+      function generatePresetName() {
+        const presets = getPresets();
+        const existing = Object.keys(presets);
+        let max = 0;
+        for (const name of existing) {
+          const m = name.match(/^预设 (\d+)$/);
+          if (m) max = Math.max(max, parseInt(m[1], 10));
+        }
+        return `预设 ${max + 1}`;
+      }
+
+      function updatePresetDropdown() {
+        const presets = getPresets();
+        const select = document.getElementById('preset-select');
+        select.innerHTML = '<option value="">-- 加载 --</option>';
+        Object.keys(presets).sort().forEach(name => {
+          const opt = document.createElement('option');
+          opt.value = name;
+          opt.textContent = name;
+          if (name === currentPresetName) opt.selected = true;
+          select.appendChild(opt);
+        });
+      }
+
+      function savePreset() {
+        const nameInput = document.getElementById('preset-name');
+        let name = nameInput.value.trim();
+        if (!name) {
+          name = generatePresetName();
+          nameInput.value = name;
+        }
+
+        const presets = getPresets();
+        const isOverwrite = !!presets[name] && name !== currentPresetName;
+        if (isOverwrite && !confirm(`预设「${name}」已存在，是否覆盖？`)) return;
+
+        presets[name] = getCurrentSettings();
+        savePresets(presets);
+        localStorage.setItem(LAST_PRESET_KEY, name);
+        currentPresetName = name;
+        updatePresetDropdown();
+        nameInput.value = name;
+      }
+
+      function loadPreset(name) {
+        if (!name) return;
+        const presets = getPresets();
+        const s = presets[name];
+        if (!s) return;
+
+        pause();
+        applySettings(s);
+        currentPresetName = name;
+        localStorage.setItem(LAST_PRESET_KEY, name);
+        document.getElementById('preset-name').value = name;
+        updatePresetDropdown();
+      }
+
+      function deletePreset() {
+        const presets = getPresets();
+        const name = currentPresetName || document.getElementById('preset-name').value.trim();
+        if (!name || !presets[name]) {
+          alert('请先选择一个预设');
+          return;
+        }
+        if (!confirm(`确定要删除预设「${name}」吗？`)) return;
+
+        delete presets[name];
+        savePresets(presets);
+
+        if (currentPresetName === name) {
+          currentPresetName = '';
+          localStorage.removeItem(LAST_PRESET_KEY);
+          document.getElementById('preset-name').value = '';
+        }
+        updatePresetDropdown();
+      }
+
+      // ── Default text ──────────────────────────────
+      const defaultText =
+        `欢迎使用 Teleprompter 提词器
+
+这是一个高颜值、功能丰富的浏览器端提词器。
+
+你可以直接在下方编辑区粘贴或修改提词内容，
+也可以点击「导入文本」按钮加载本地 .txt 文件。
+
+调整字体大小、颜色和背景色，找到最舒适的阅读效果。
+四种滚动方向任你选择，速度随心调节。
+
+点击「全屏」获得沉浸式提词体验。
+
+现在，点击「开始」，让文字滚动起来吧！`;
+
+      // ── Helpers ───────────────────────────────────
+      function isVertical() {
+        return direction === 'bottom-up' || direction === 'top-down';
+      }
+
+      function directionSign() {
+        if (direction === 'bottom-up' || direction === 'right-left') return -1;
+        return 1; // top-down or left-right
+      }
+
+      function getContainerSize() {
+        const rect = displayContainer.getBoundingClientRect();
+        return isVertical() ? rect.height : rect.width;
+      }
+
+      function getContentSize() {
+        const rect = displayContent.getBoundingClientRect();
+        return isVertical() ? rect.height : rect.width;
+      }
+
+      function initialPosition() {
+        const containerSize = getContainerSize();
+        const contentSize = getContentSize();
+        if (directionSign() === -1) {
+          // text starts after the visible area (bottom or right)
+          return containerSize;
+        } else {
+          // text starts before the visible area (top or left)
+          return -contentSize;
+        }
+      }
+
+      function wrapPosition(pos) {
+        const containerSize = getContainerSize();
+        const contentSize = getContentSize();
+        const maxExtent = Math.max(containerSize, contentSize);
+
+        if (directionSign() === -1) {
+          // moving negative: wrap when text fully exits other side
+          if (pos <= -contentSize) {
+            return containerSize;
+          }
+        } else {
+          // moving positive: wrap when text fully exits other side
+          if (pos >= containerSize) {
+            return -contentSize;
+          }
+        }
+        return pos;
+      }
+
+      // ── Update display content ────────────────────
+      function updateDisplayContent() {
+        let text = textEditor.value;
+        if (isVertical()) {
+          displayContent.textContent = text;
+        } else {
+          // Horizontal: replace newlines with separator
+          displayContent.textContent = text.replace(/\n+/g, '  ◆  ');
+        }
+      }
+
+      // ── Apply styles ──────────────────────────────
+      function applyStyles() {
+        displayContent.style.fontSize = fontSize + 'px';
+        displayContent.style.color = fontColor;
+        displayContainer.style.backgroundColor = bgColor;
+
+        // Update fade gradients to match background
+        const bg = bgColor;
+        fadeTop.style.background = `linear-gradient(to bottom, ${bg}, transparent)`;
+        fadeBottom.style.background = `linear-gradient(to top, ${bg}, transparent)`;
+        fadeLeft.style.background = `linear-gradient(to right, ${bg}, transparent)`;
+        fadeRight.style.background = `linear-gradient(to left, ${bg}, transparent)`;
+        displayContainer.style.setProperty('--bg', bg);
+      }
+
+      function updateDirectionUI() {
+        // Content mode class
+        displayContent.classList.toggle('horizontal-mode', !isVertical());
+
+        // Fades
+        fadeTop.style.opacity = isVertical() ? '1' : '0';
+        fadeBottom.style.opacity = isVertical() ? '1' : '0';
+        fadeLeft.style.opacity = isVertical() ? '0' : '1';
+        fadeRight.style.opacity = isVertical() ? '0' : '1';
+
+        // Direction buttons
+        document.querySelectorAll('.direction-btn').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.dir === direction);
+        });
+      }
+
+      // ── Content measurement & position reset ──────
+      function measureAndResetPosition() {
+        // Temporarily remove transform to get natural size
+        displayContent.style.transform = '';
+        // Force layout
+        displayContent.offsetHeight;
+
+        position = initialPosition();
+        applyTransform();
+      }
+
+      function applyTransform() {
+        if (isVertical()) {
+          displayContent.style.transform = `translateY(${position}px)`;
+        } else {
+          displayContent.style.transform = `translateX(${position}px)`;
+        }
+      }
+
+      // ── Animation ─────────────────────────────────
+      function animate(timestamp) {
+        if (!isPlaying) return;
+
+        if (lastTime === 0) {
+          lastTime = timestamp;
+          animationId = requestAnimationFrame(animate);
+          return;
+        }
+
+        const delta = Math.min((timestamp - lastTime) / 1000, 0.1); // cap at 100ms
+        lastTime = timestamp;
+
+        position += speed * directionSign() * delta;
+        position = wrapPosition(position);
+        applyTransform();
+
+        animationId = requestAnimationFrame(animate);
+      }
+
+      function start() {
+        if (isPlaying) return;
+        if (!textEditor.value.trim()) return;
+
+        isPlaying = true;
+        lastTime = 0;
+        animationId = requestAnimationFrame(animate);
+        updatePlayButtons();
+      }
+
+      function pause() {
+        if (!isPlaying) return;
+        isPlaying = false;
+        if (animationId) {
+          cancelAnimationFrame(animationId);
+          animationId = null;
+        }
+        updatePlayButtons();
+      }
+
+      function reset() {
+        pause();
+        measureAndResetPosition();
+      }
+
+      function togglePlay() {
+        if (isPlaying) {
+          pause();
+        } else {
+          start();
+        }
+      }
+
+      function updatePlayButtons() {
+        const btnPlay = document.getElementById('btn-play');
+        const text = isPlaying ? ' 播放中' : ' 开始';
+        const iconName = isPlaying ? 'pause' : 'play';
+        btnPlay.innerHTML = `<i data-lucide="${iconName}"></i>${text}`;
+        btnPlay.style.opacity = isPlaying ? '0.7' : '1';
+        safeCreateIcons();
+      }
+
+      function safeCreateIcons() {
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+      }
+
+      // ── Event handlers ────────────────────────────
+      function onDirectionChange(newDir) {
+        if (direction === newDir) return;
+        pause();
+        direction = newDir;
+        updateDisplayContent();
+        updateDirectionUI();
+        measureAndResetPosition();
+      }
+
+      function onFontSizeChange(delta) {
+        const newSize = delta ? fontSize + delta : parseInt(fontSizeInput.value, 10);
+        if (isNaN(newSize) || newSize < 1) {
+          fontSizeInput.value = fontSize;
+          return;
+        }
+        fontSize = newSize;
+        fontSizeInput.value = fontSize;
+        applyStyles();
+        measureAndResetPosition();
+      }
+
+      function onFontSizeInput() {
+        onFontSizeChange(0);
+      }
+
+      function onSpeedChange(newSpeed) {
+        speed = newSpeed;
+        speedDisplay.textContent = speed;
+      }
+
+      function onFontColorChange(color) {
+        fontColor = color;
+        applyStyles();
+      }
+
+      function onBgColorChange(color) {
+        bgColor = color;
+        applyStyles();
+      }
+
+      function importFile(file) {
+        if (!file || !file.name.endsWith('.txt')) {
+          alert('请选择 .txt 文本文件');
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          textEditor.value = e.target.result;
+          updateDisplayContent();
+          measureAndResetPosition();
+        };
+        reader.readAsText(file, 'UTF-8');
+      }
+
+      function toggleFullscreen() {
+        if (document.fullscreenElement) {
+          document.exitFullscreen();
+        } else {
+          document.documentElement.requestFullscreen();
+        }
+      }
+
+      function onFullscreenChange() {
+        const isFull = !!document.fullscreenElement;
+        document.body.classList.toggle('fullscreen', isFull);
+        const autoHide = document.getElementById('toggle-auto-hide').checked;
+        document.body.classList.toggle('auto-hide', isFull && autoHide);
+        // Measure toolbar height for negative margin
+        if (isFull && autoHide) {
+          const th = document.getElementById('toolbar').offsetHeight;
+          document.body.style.setProperty('--toolbar-h', th + 'px');
+        }
+        // Re-measure after fullscreen transition
+        setTimeout(measureAndResetPosition, 200);
+      }
+
+      let hideToolbarTimer = null;
+
+      function handleFullscreenMouseMove(e) {
+        const autoHide = document.getElementById('toggle-auto-hide').checked;
+        if (!document.fullscreenElement || !autoHide) return;
+
+        const toolbar = document.getElementById('toolbar');
+        if (e.clientY <= 60) {
+          toolbar.classList.add('visible');
+          clearTimeout(hideToolbarTimer);
+          hideToolbarTimer = setTimeout(() => {
+            toolbar.classList.remove('visible');
+          }, 2000);
+        }
+      }
+
+      // ── Event bindings ────────────────────────────
+      document.getElementById('btn-play').addEventListener('click', start);
+      document.getElementById('btn-pause').addEventListener('click', pause);
+      document.getElementById('btn-reset').addEventListener('click', reset);
+      document.getElementById('btn-fullscreen').addEventListener('click', toggleFullscreen);
+      document.getElementById('btn-fullscreen-play').addEventListener('click', () => {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen();
+        }
+        start();
+      });
+      document.getElementById('btn-import').addEventListener('click', () => {
+        document.getElementById('import-file').click();
+      });
+      document.getElementById('import-file').addEventListener('change', (e) => {
+        if (e.target.files[0]) importFile(e.target.files[0]);
+        e.target.value = '';
+      });
+      document.getElementById('btn-clear').addEventListener('click', () => {
+        if (confirm('确定要清空提词内容吗？')) {
+          textEditor.value = '';
+          updateDisplayContent();
+          measureAndResetPosition();
+        }
+      });
+
+      document.getElementById('btn-font-inc').addEventListener('click', () => onFontSizeChange(2));
+      document.getElementById('btn-font-dec').addEventListener('click', () => onFontSizeChange(-2));
+      fontSizeInput.addEventListener('change', onFontSizeInput);
+
+      fontColorInput.addEventListener('input', (e) => onFontColorChange(e.target.value));
+      bgColorInput.addEventListener('input', (e) => onBgColorChange(e.target.value));
+
+      speedSlider.addEventListener('input', (e) => onSpeedChange(Number(e.target.value)));
+
+      document.querySelectorAll('.direction-btn').forEach(btn => {
+        btn.addEventListener('click', () => onDirectionChange(btn.dataset.dir));
+      });
+
+      // Preset events
+      document.getElementById('btn-save-preset').addEventListener('click', savePreset);
+      document.getElementById('preset-select').addEventListener('change', (e) => {
+        if (e.target.value) loadPreset(e.target.value);
+      });
+      document.getElementById('btn-delete-preset').addEventListener('click', deletePreset);
+      document.getElementById('preset-name').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') savePreset();
+      });
+
+      textEditor.addEventListener('input', () => {
+        updateDisplayContent();
+        if (!isPlaying) {
+          measureAndResetPosition();
+        }
+      });
+
+      document.addEventListener('fullscreenchange', onFullscreenChange);
+      document.addEventListener('mousemove', handleFullscreenMouseMove);
+      document.getElementById('toggle-auto-hide').addEventListener('change', (e) => {
+        const autoHide = e.target.checked;
+        localStorage.setItem('teleprompter_auto_hide', autoHide ? '1' : '0');
+        if (document.fullscreenElement) {
+          document.body.classList.toggle('auto-hide', autoHide);
+          if (autoHide) {
+            const th = document.getElementById('toolbar').offsetHeight;
+            document.body.style.setProperty('--toolbar-h', th + 'px');
+          } else {
+            document.getElementById('toolbar').classList.remove('visible');
+          }
+        }
+      });
+      // click label text to toggle the switch
+      document.querySelector('.toggle-label').addEventListener('click', () => {
+        const cb = document.getElementById('toggle-auto-hide');
+        cb.checked = !cb.checked;
+        cb.dispatchEvent(new Event('change'));
+      });
+      window.addEventListener('resize', () => {
+        measureAndResetPosition();
+      });
+
+      // Keyboard shortcuts
+      document.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+        switch (e.key) {
+          case ' ':
+            e.preventDefault();
+            togglePlay();
+            break;
+          case 'Escape':
+            if (document.fullscreenElement) {
+              document.exitFullscreen();
+            }
+            break;
+          case 'ArrowUp':
+            e.preventDefault();
+            onSpeedChange(Math.min(500, speed + 5));
+            speedSlider.value = speed;
+            break;
+          case 'ArrowDown':
+            e.preventDefault();
+            onSpeedChange(Math.max(10, speed - 5));
+            speedSlider.value = speed;
+            break;
+          case 'ArrowLeft':
+            e.preventDefault();
+            onFontSizeChange(-2);
+            break;
+          case 'ArrowRight':
+            e.preventDefault();
+            onFontSizeChange(2);
+            break;
+        }
+      });
+
+      // ── Init ──────────────────────────────────────
+      function init() {
+        textEditor.value = defaultText;
+        fontSizeInput.value = fontSize;
+        speedDisplay.textContent = speed;
+        speedSlider.value = speed;
+        fontColorInput.value = fontColor;
+        bgColorInput.value = bgColor;
+
+        // Restore last preset
+        const lastName = localStorage.getItem(LAST_PRESET_KEY);
+        if (lastName) {
+          const presets = getPresets();
+          if (presets[lastName]) {
+            applySettings(presets[lastName]);
+            currentPresetName = lastName;
+            document.getElementById('preset-name').value = lastName;
+          }
+        }
+
+        // Restore auto-hide preference
+        if (localStorage.getItem('teleprompter_auto_hide') === '1') {
+          document.getElementById('toggle-auto-hide').checked = true;
+        }
+
+        updateDisplayContent();
+        applyStyles();
+        updateDirectionUI();
+        updatePresetDropdown();
+        measureAndResetPosition();
+        updatePlayButtons();
+        safeCreateIcons();
+      }
+
+      window._onLucideReady(init);
+    })();
+  </script>
+</body>
+
+</html>
