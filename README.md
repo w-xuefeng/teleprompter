@@ -51,6 +51,8 @@
 
 ### 远程控制
 
+![远程控制演示](remote-control.gif)
+
 静态页面托管在 GitHub Pages，WebSocket 服务需要**自行部署**到你的服务器：
 
 **1. 部署 WebSocket 服务端**
