@@ -1933,8 +1933,7 @@
       let remoteRoomCode = '';
 
       function isServedByServer() {
-        const h = location.hostname;
-        return h !== 'localhost' && h !== '127.0.0.1' && h.indexOf('github.io') === -1;
+        return location.hostname.indexOf('github.io') === -1;
       }
 
       function getRemoteServer() {
