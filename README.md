@@ -59,7 +59,9 @@
 
 2. 电脑端打开 `index.html`，点击工具栏的手机图标，获取房间代码。
 
-3. 手机端打开 `remote-control.html`（或简短地址 `ctrl.html`），输入电脑的局域网 IP + 房间代码，点击连接即可遥控。
+3. 手机端打开遥控器页面，输入电脑的局域网 IP + 房间代码，点击连接即可遥控。
+   - 在线地址：[w-xuefeng.github.io/teleprompter/remote-control.html](https://w-xuefeng.github.io/teleprompter/remote-control.html)
+   - 快捷地址：[w-xuefeng.github.io/teleprompter/ctrl.html](https://w-xuefeng.github.io/teleprompter/ctrl.html)
 
 ## 键盘快捷键
 
