@@ -1998,7 +1998,8 @@
         setRemoteRoom(code);
         document.getElementById('remote-room-code').textContent = code;
 
-        const url = 'ws://' + server;
+        const wsProto = location.protocol === 'https:' ? 'wss://' : 'ws://';
+        const url = wsProto + server;
         updateRemoteStatus('正在连接...');
         var connectError = false;
 

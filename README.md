@@ -57,15 +57,29 @@
    ```
    默认端口 3456，可通过 `PORT` 环境变量修改。启动后会自动显示本机局域网 IP。
 
-2. 电脑端通过 `http://<电脑IP>:3456/` 打开提词器页面，点击工具栏的手机图标获取房间代码。
+   > 服务端默认使用 **HTTPS**（自动生成自签名证书），以支持 PWA 安装到本地。如需降级为 HTTP，使用 `node server.js --http`。
 
-3. 手机端通过 `http://<电脑IP>:3456/ctrl`（或 `/remote-control`）打开遥控器页面，输入房间代码即可遥控。
+2. 电脑端通过 `https://<电脑IP>:3456/` 打开提词器页面（首次需跳过证书警告，见下文），点击工具栏的手机图标获取房间代码。
+
+3. 手机端通过 `https://<电脑IP>:3456/ctrl`（或 `/remote-control`）打开遥控器页面，输入房间代码即可遥控。
 
    > 通过服务端访问时，服务器地址会自动填充且无需修改。
 
 4. 若要远程进入全屏，主机会弹出确认提示，点击屏幕即可授权。
 
-> **提示**：GitHub Pages（HTTPS）无法连接本地 `ws://` 服务，请直接通过服务端的 HTTP 地址访问页面，而非 GitHub Pages。
+> **提示**：GitHub Pages（HTTPS）无法连接本地 WebSocket 服务，请直接通过服务端地址访问页面，而非 GitHub Pages。
+
+### HTTPS 与自签名证书
+
+服务端默认启用 HTTPS，首次启动会自动生成自签名证书（`server/cert.pem`、`server/key.pem`）。由于是自签名证书，浏览器会提示「您的连接不是私密连接」，这是正常现象，需要手动信任：
+
+- **桌面 Chrome/Edge**：点击「高级」→「继续前往（不安全）」
+- **移动端 Chrome**：点击「高级」→「继续前往」
+- **Safari**：点击「显示详细信息」→「访问此网站」
+
+证书有效期 365 天，过期后删除 `server/cert.pem` 和 `server/key.pem` 重新启动即可重新生成。
+
+> 只有 HTTPS 下浏览器才允许 Service Worker 注册和 PWA 安装。HTTP 模式下 PWA 功能不可用。
 
 ### 自部署服务端
 
@@ -112,6 +126,13 @@ WantedBy=multi-user.target
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl enable --now teleprompter
+```
+
+**使用 HTTP 模式（不需要 PWA 时）**
+
+```bash
+node server.js --http         # 临时使用 HTTP
+# 或修改 systemd/pm2 中的启动命令追加 --http
 ```
 
 **自定义端口**
