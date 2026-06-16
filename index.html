@@ -1160,7 +1160,7 @@
       <h3><i data-lucide="smartphone"></i> 远程控制<button class="modal-close" id="btn-remote-close" title="关闭"><i data-lucide="x"></i></button></h3>
       <div class="form-group">
         <label class="form-label">服务器地址</label>
-        <input type="text" id="remote-server" placeholder="192.168.1.100:3456">
+        <input type="text" id="remote-server" placeholder="your-server.com">
       </div>
       <div class="form-group">
         <span class="form-label">房间代码 <button class="btn-refresh" id="btn-refresh-room" title="重新生成">换一个</button></span>
@@ -1932,13 +1932,8 @@
       let remoteConnected = false;
       let remoteRoomCode = '';
 
-      function isServedByServer() {
-        return location.hostname.indexOf('github.io') === -1;
-      }
-
       function getRemoteServer() {
-        if (isServedByServer()) return location.host;
-        return localStorage.getItem(REMOTE_SERVER_KEY) || 'localhost:3456';
+        return localStorage.getItem(REMOTE_SERVER_KEY) || '';
       }
 
       function setRemoteServer(addr) {
@@ -1986,7 +1981,11 @@
       }
 
       function connectRemote() {
-        const server = document.getElementById('remote-server').value.trim() || 'localhost:3456';
+        const server = document.getElementById('remote-server').value.trim();
+        if (!server) {
+          updateRemoteStatus('请输入服务器地址', true);
+          return;
+        }
         setRemoteServer(server);
 
         let code = document.getElementById('remote-room-code').textContent.trim();
@@ -2166,7 +2165,6 @@
       function showRemoteModal() {
         const serverInput = document.getElementById('remote-server');
         serverInput.value = getRemoteServer();
-        serverInput.disabled = isServedByServer();
         const savedRoom = getRemoteRoom();
         document.getElementById('remote-room-code').textContent = savedRoom || generateRoomCode();
         document.getElementById('remote-modal-overlay').classList.add('show');

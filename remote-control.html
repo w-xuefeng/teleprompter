@@ -622,7 +622,7 @@
       <div class="connect-card">
         <div class="form-group">
           <label class="form-label">服务器地址</label>
-          <input type="text" class="form-input" id="server-addr" placeholder="192.168.1.100:3456" inputmode="url" autocomplete="off">
+          <input type="text" class="form-input" id="server-addr" placeholder="your-server.com" inputmode="url" autocomplete="off">
         </div>
         <div class="form-group">
           <label class="form-label">房间代码</label>
@@ -792,19 +792,8 @@
       };
 
       // ── Persistence ───────────────────────────────
-      function isServedByServer() {
-        var h = location.hostname;
-        return h !== 'localhost' && h !== '127.0.0.1' && h.indexOf('github.io') === -1;
-      }
-
       function loadSettings() {
-        if (isServedByServer()) {
-          serverAddr.value = location.host;
-          serverAddr.disabled = true;
-        } else {
-          serverAddr.value = localStorage.getItem(SERVER_KEY) || '';
-          serverAddr.disabled = false;
-        }
+        serverAddr.value = localStorage.getItem(SERVER_KEY) || '';
         roomInput.value = localStorage.getItem(ROOM_KEY) || '';
       }
 

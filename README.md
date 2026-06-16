@@ -51,27 +51,32 @@
 
 ### 远程控制
 
-1. 在服务器上启动服务端（同时提供 WebSocket 和静态文件服务）：
-   ```bash
-   cd server && npm start
-   ```
-   默认端口 3456，可通过 `PORT` 环境变量修改。
+静态页面托管在 GitHub Pages，WebSocket 服务需要**自行部署**到你的服务器：
 
-2. 电脑端通过 `http://<服务器地址>:3456/` 或者 `https://your-teleprompter-domain/` 打开提词器页面，点击工具栏的手机图标获取房间代码。
+**1. 部署 WebSocket 服务端**
 
-3. 手机端通过 `http://<服务器地址>:3456/ctrl` 或者 `https://your-teleprompter-domain/ctrl` 打开遥控器页面，输入房间代码即可遥控。
+将 `server/` 目录上传到你的服务器，安装依赖并启动：
 
-   > 通过服务端访问时，服务器地址会自动填充且无需修改。
+```bash
+cd server
+npm install
+node server.js
+```
 
-4. 若要远程进入全屏，主机会弹出确认提示，点击屏幕即可授权。
+默认端口 3456，可通过 `PORT` 环境变量修改。
 
-### 配置 HTTPS（推荐）
+**2. 配置 HTTPS 反代**
 
-PWA 安装需要 HTTPS。推荐使用反向代理 + Let's Encrypt 免费证书：
+WebSocket 服务端是纯 HTTP，需要在前面挂 Nginx/Caddy 提供 WSS 支持。推荐使用 Let's Encrypt 免费证书：
 
-**Nginx 配置示例**
+Nginx 配置示例：
 
 ```nginx
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    ''      close;
+}
+
 server {
     listen 80;
     server_name your-domain.com;
@@ -80,7 +85,7 @@ server {
         proxy_pass http://127.0.0.1:3456;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
+        proxy_set_header Connection $connection_upgrade;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     }
@@ -92,7 +97,7 @@ sudo apt install certbot python3-certbot-nginx
 sudo certbot --nginx -d your-domain.com
 ```
 
-**Caddy 配置示例**（自动 HTTPS，无需额外配置证书）
+Caddy 配置示例（自动 HTTPS）：
 
 ```
 your-domain.com {
@@ -100,7 +105,14 @@ your-domain.com {
 }
 ```
 
-> 反向代理会自动处理 WebSocket 升级（wss://），无需额外配置。
+**3. 使用**
+
+- 电脑端访问 [w-xuefeng.github.io/teleprompter](https://w-xuefeng.github.io/teleprompter)，点击工具栏的手机图标
+- 在弹窗中填入你的服务器地址（如 `your-domain.com`），获取房间代码
+- 手机端访问 [w-xuefeng.github.io/teleprompter/ctrl](https://w-xuefeng.github.io/teleprompter/ctrl)，填入相同地址和房间代码即可遥控
+- 远程进入全屏时，主机会弹出确认提示，点击屏幕即可授权
+
+> 服务器地址会保存在浏览器本地存储中，下次使用无需重新输入。
 
 ### 自部署服务端
 
