@@ -354,6 +354,26 @@
       transform: scale(1.3);
     }
 
+    /* Progress scrubber — wider and more prominent */
+    #progress-slider {
+      width: 100%;
+      min-width: 100px;
+      height: 4px;
+    }
+    #progress-slider::-webkit-slider-thumb {
+      width: 14px;
+      height: 14px;
+    }
+    #progress-slider:disabled {
+      opacity: 0.3;
+      cursor: default;
+    }
+    #progress-slider:disabled::-webkit-slider-thumb {
+      background: rgba(255, 255, 255, 0.25);
+      box-shadow: none;
+      transform: none;
+    }
+
     .preset-name-input,
     .font-size-input,
     .preset-select {
@@ -716,6 +736,10 @@
         <button id="btn-pause" class="icon-only" title="暂停" style="display: none;"><i data-lucide="pause"></i></button>
         <button class="warn icon-only" id="btn-reset" title="重置"><i data-lucide="rotate-ccw"></i></button>
       </div>
+      <div class="ctrl-group" style="flex:1; min-width:120px;">
+        <span class="ctrl-label" title="播放进度"><i data-lucide="grip-horizontal"></i></span>
+        <input type="range" id="progress-slider" min="0" max="1000" value="0" step="1" title="拖动调整播放位置">
+      </div>
       <div class="ctrl-group">
         <button id="btn-fullscreen" class="icon-only" title="全屏"><i data-lucide="maximize"></i></button>
         <div style="display:flex; align-items:center; gap:5px;">
@@ -768,6 +792,7 @@
       const textEditor = document.getElementById('text-editor');
       const speedSlider = document.getElementById('speed-slider');
       const speedDisplay = document.getElementById('speed-display');
+      const progressSlider = document.getElementById('progress-slider');
       const fontSizeInput = document.getElementById('font-size-input');
       const fontColorInput = document.getElementById('font-color');
       const bgColorInput = document.getElementById('bg-color');
@@ -793,6 +818,7 @@
       let animationId = null;
       let lastTime = 0;
       let currentPresetName = '';
+      let savedPositionBeforeFullscreen = null;
 
       const PRESETS_KEY = 'teleprompter_presets';
       const LAST_PRESET_KEY = 'teleprompter_last_preset';
@@ -988,6 +1014,36 @@
         return pos;
       }
 
+      // ── Progress slider ──────────────────────────
+      let isSeeking = false;
+
+      function positionToProgress() {
+        const containerSize = getContainerSize();
+        const contentSize = getContentSize();
+        const total = containerSize + contentSize;
+        if (total <= 0) return 0;
+        if (directionSign() === -1) {
+          return Math.round(((containerSize - position) / total) * 1000);
+        } else {
+          return Math.round(((position + contentSize) / total) * 1000);
+        }
+      }
+
+      function progressToPosition(progress) {
+        const containerSize = getContainerSize();
+        const contentSize = getContentSize();
+        const total = containerSize + contentSize;
+        if (directionSign() === -1) {
+          return containerSize - (progress / 1000) * total;
+        } else {
+          return -contentSize + (progress / 1000) * total;
+        }
+      }
+
+      function updateProgressSlider() {
+        progressSlider.value = positionToProgress();
+      }
+
       // ── Update display content ────────────────────
       function updateDisplayContent() {
         let text = textEditor.value;
@@ -1039,6 +1095,7 @@
 
         position = initialPosition();
         applyTransform();
+        updateProgressSlider();
 
         isAtBeginning = true;
         updatePlayButtons();
@@ -1068,6 +1125,7 @@
         position += speed * directionSign() * delta;
         position = wrapPosition(position);
         applyTransform();
+        updateProgressSlider();
 
         animationId = requestAnimationFrame(animate);
       }
@@ -1079,6 +1137,7 @@
         isPlaying = true;
         isAtBeginning = false;
         lastTime = 0;
+        progressSlider.disabled = true;
         animationId = requestAnimationFrame(animate);
         updatePlayButtons();
       }
@@ -1090,6 +1149,7 @@
           cancelAnimationFrame(animationId);
           animationId = null;
         }
+        progressSlider.disabled = false;
         updatePlayButtons();
       }
 
@@ -1201,6 +1261,10 @@
       }
 
       function toggleFullscreen() {
+        savedPositionBeforeFullscreen = position;
+        if (isPlaying) {
+          pause();
+        }
         if (document.fullscreenElement) {
           document.exitFullscreen();
         } else {
@@ -1218,8 +1282,24 @@
           const th = document.getElementById('toolbar').offsetHeight;
           document.body.style.setProperty('--toolbar-h', th + 'px');
         }
-        // Re-measure after fullscreen transition
-        setTimeout(measureAndResetPosition, 200);
+        // Save position if not already saved (e.g. F11 / browser native control)
+        if (savedPositionBeforeFullscreen === null) {
+          savedPositionBeforeFullscreen = position;
+        }
+        // Re-measure after fullscreen transition, then restore saved position
+        setTimeout(() => {
+          // Measure new container/content sizes
+          displayContent.style.transform = '';
+          displayContent.offsetHeight;
+
+          if (savedPositionBeforeFullscreen !== null) {
+            position = savedPositionBeforeFullscreen;
+            savedPositionBeforeFullscreen = null;
+          }
+          applyTransform();
+          updateProgressSlider();
+          updatePlayButtons();
+        }, 200);
       }
 
       let hideToolbarTimer = null;
@@ -1252,6 +1332,22 @@
       document.getElementById('btn-pause').addEventListener('click', pause);
       document.getElementById('btn-reset').addEventListener('click', reset);
       document.getElementById('btn-fullscreen').addEventListener('click', toggleFullscreen);
+
+      // Progress slider scrubbing (only when not playing)
+      progressSlider.addEventListener('input', () => {
+        if (isPlaying) {
+          progressSlider.value = positionToProgress();
+          return;
+        }
+        isSeeking = true;
+        position = progressToPosition(Number(progressSlider.value));
+        applyTransform();
+        isAtBeginning = false;
+      });
+      progressSlider.addEventListener('change', () => {
+        isSeeking = false;
+        updatePlayButtons();
+      });
 
       // Dropdown toggle click
       btnPlayToggle.addEventListener('click', (e) => {
