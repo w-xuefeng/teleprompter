@@ -1,7 +1,65 @@
 import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
+import { readFileSync, existsSync } from 'fs';
+import { join, extname, dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { networkInterfaces } from 'os';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const ROOT = join(__dirname, '..');
 
 const PORT = process.env.PORT || 3456;
+
+const MIME = {
+  '.html': 'text/html; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.js': 'application/javascript; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.ico': 'image/x-icon',
+};
+
+function serveStatic(req, res) {
+  let pathname = req.url.split('?')[0];
+  if (pathname === '/') pathname = '/index.html';
+
+  // Clean URLs: try .html extension if file not found
+  let filePath = join(ROOT, pathname);
+  if (!existsSync(filePath) && !extname(pathname)) {
+    const tryHtml = join(ROOT, pathname + '.html');
+    if (existsSync(tryHtml)) {
+      pathname = pathname + '.html';
+      filePath = tryHtml;
+    }
+  }
+
+  if (!filePath.startsWith(ROOT)) {
+    res.writeHead(403);
+    res.end('Forbidden');
+    return;
+  }
+
+  if (!existsSync(filePath)) {
+    res.writeHead(404);
+    res.end('Not Found');
+    return;
+  }
+
+  const ext = extname(filePath);
+  const contentType = MIME[ext] || 'application/octet-stream';
+
+  try {
+    const content = readFileSync(filePath);
+    res.writeHead(200, { 'Content-Type': contentType });
+    res.end(content);
+  } catch {
+    res.writeHead(500);
+    res.end('Internal Server Error');
+  }
+}
+
+const rooms = new Map();
 
 const server = createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -20,13 +78,16 @@ const server = createServer((req, res) => {
     return;
   }
 
+  if (req.method === 'GET') {
+    serveStatic(req, res);
+    return;
+  }
+
   res.writeHead(404);
   res.end();
 });
 
 const wss = new WebSocketServer({ server });
-
-const rooms = new Map();
 
 function generateId() {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -108,7 +169,24 @@ wss.on('connection', ws => {
   ws.on('error', () => {});
 });
 
+function getLocalIP() {
+  const interfaces = networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]) {
+      if (iface.family === 'IPv4' && !iface.internal) {
+        return iface.address;
+      }
+    }
+  }
+  return null;
+}
+
 server.listen(PORT, () => {
+  const ip = getLocalIP();
   console.log(`Teleprompter remote server running on port ${PORT}`);
-  console.log(`WebSocket: ws://localhost:${PORT}`);
+  console.log(`  Local:    http://localhost:${PORT}/`);
+  if (ip) {
+    console.log(`  Remote:   http://${ip}:${PORT}/remote-control`);
+    console.log(`  Short:    http://${ip}:${PORT}/ctrl`);
+  }
 });

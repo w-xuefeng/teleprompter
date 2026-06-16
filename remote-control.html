@@ -642,8 +642,8 @@
       <!-- Top Bar -->
       <div class="topbar">
         <div class="status-badge">
-          <span class="status-dot"></span>
-          <span>已连接</span>
+          <span class="status-dot" id="status-dot"></span>
+          <span id="status-text">已连接</span>
         </div>
         <div style="text-align:center;">
           <div class="room-label">房间</div>
@@ -792,8 +792,19 @@
       };
 
       // ── Persistence ───────────────────────────────
+      function isServedByServer() {
+        var h = location.hostname;
+        return h !== 'localhost' && h !== '127.0.0.1' && h.indexOf('github.io') === -1;
+      }
+
       function loadSettings() {
-        serverAddr.value = localStorage.getItem(SERVER_KEY) || '';
+        if (isServedByServer()) {
+          serverAddr.value = location.host;
+          serverAddr.disabled = true;
+        } else {
+          serverAddr.value = localStorage.getItem(SERVER_KEY) || '';
+          serverAddr.disabled = false;
+        }
         roomInput.value = localStorage.getItem(ROOM_KEY) || '';
       }
 
@@ -819,17 +830,23 @@
         saveSettings();
 
         var url = 'ws://' + server;
-        connectScreen.classList.remove('active');
-        controlScreen.classList.add('active');
-        roomDisplay.textContent = room;
-        disconnectedOverlay.classList.remove('show');
+        if (location.protocol === 'https:') {
+          url = 'wss://' + server;
+        }
+
+        btnConnect.textContent = '正在连接...';
+        btnConnect.disabled = true;
 
         try {
           ws = new WebSocket(url);
         } catch (e) {
-          onDisconnected();
+          btnConnect.textContent = '连接';
+          btnConnect.disabled = false;
+          alert('无法创建连接，请检查服务器地址');
           return;
         }
+
+        var connectFailed = false;
 
         ws.onopen = function() {
           ws.send(JSON.stringify({
@@ -844,10 +861,40 @@
         };
 
         ws.onclose = function() {
-          if (connected) onDisconnected();
+          if (connected) {
+            onDisconnected();
+          } else if (!connectFailed) {
+            btnConnect.textContent = '连接';
+            btnConnect.disabled = false;
+            alert('连接失败，请确认服务器地址和房间代码正确');
+          }
+          ws = null;
         };
 
-        ws.onerror = function() {};
+        ws.onerror = function() {
+          connectFailed = true;
+          ws = null;
+          btnConnect.textContent = '连接';
+          btnConnect.disabled = false;
+          var msg = '连接失败，请确认服务器已启动且地址正确';
+          if (location.protocol === 'https:') {
+            msg = '无法连接到本地服务器（HTTPS 页面不允许非加密连接）。请直接通过服务端地址访问：http://' + server;
+          }
+          alert(msg);
+        };
+      }
+
+      function onJoined(room) {
+        connected = true;
+        btnConnect.textContent = '连接';
+        btnConnect.disabled = false;
+        connectScreen.classList.remove('active');
+        controlScreen.classList.add('active');
+        roomDisplay.textContent = room;
+        disconnectedOverlay.classList.remove('show');
+        document.getElementById('status-text').textContent = '已连接';
+        document.getElementById('status-dot').style.background = '';
+        safeCreateIcons();
       }
 
       function disconnect() {
@@ -864,6 +911,9 @@
 
       function onDisconnected() {
         connected = false;
+        ws = null;
+        document.getElementById('status-text').textContent = '已断开';
+        document.getElementById('status-dot').style.background = 'var(--c-danger)';
         disconnectedOverlay.classList.add('show');
       }
 
@@ -880,8 +930,7 @@
       function handleMessage(msg) {
         switch (msg.type) {
           case 'joined':
-            connected = true;
-            disconnectedOverlay.classList.remove('show');
+            onJoined(msg.room);
             break;
 
           case 'state':
@@ -962,11 +1011,7 @@
 
       btnDisconnect.addEventListener('click', disconnect);
       btnReconnect.addEventListener('click', function() {
-        disconnectedOverlay.classList.remove('show');
-        if (ws) {
-          ws.close();
-          ws = null;
-        }
+        disconnect();
         // Reconnect with saved settings
         serverAddr.value = localStorage.getItem(SERVER_KEY) || '';
         roomInput.value = localStorage.getItem(ROOM_KEY) || '';

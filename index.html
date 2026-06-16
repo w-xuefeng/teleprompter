@@ -1928,7 +1928,13 @@
       let remoteConnected = false;
       let remoteRoomCode = '';
 
+      function isServedByServer() {
+        const h = location.hostname;
+        return h !== 'localhost' && h !== '127.0.0.1' && h.indexOf('github.io') === -1;
+      }
+
       function getRemoteServer() {
+        if (isServedByServer()) return location.host;
         return localStorage.getItem(REMOTE_SERVER_KEY) || 'localhost:3456';
       }
 
@@ -2134,7 +2140,9 @@
       }
 
       function showRemoteModal() {
-        document.getElementById('remote-server').value = getRemoteServer();
+        const serverInput = document.getElementById('remote-server');
+        serverInput.value = getRemoteServer();
+        serverInput.disabled = isServedByServer();
         const savedRoom = getRemoteRoom();
         document.getElementById('remote-room-code').textContent = savedRoom || generateRoomCode();
         document.getElementById('remote-modal-overlay').classList.add('show');

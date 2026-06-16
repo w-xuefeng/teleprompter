@@ -51,17 +51,21 @@
 
 ### 远程控制
 
-1. 启动 WebSocket 服务端：
+1. 启动服务端（同时提供 WebSocket 和静态文件服务）：
    ```bash
    cd server && npm start
    ```
-   默认端口 3456，可通过 `PORT` 环境变量修改。
+   默认端口 3456，可通过 `PORT` 环境变量修改。启动后会自动显示本机局域网 IP。
 
-2. 电脑端打开 `index.html`，点击工具栏的手机图标，获取房间代码。
+2. 电脑端通过 `http://<电脑IP>:3456/` 打开提词器页面，点击工具栏的手机图标获取房间代码。
 
-3. 手机端打开遥控器页面，输入电脑的局域网 IP + 房间代码，点击连接即可遥控。
-   - 在线地址：[w-xuefeng.github.io/teleprompter/remote-control.html](https://w-xuefeng.github.io/teleprompter/remote-control.html)
-   - 快捷地址：[w-xuefeng.github.io/teleprompter/ctrl.html](https://w-xuefeng.github.io/teleprompter/ctrl.html)
+3. 手机端通过 `http://<电脑IP>:3456/ctrl`（或 `/remote-control`）打开遥控器页面，输入房间代码即可遥控。
+
+   > 通过服务端访问时，服务器地址会自动填充且无需修改。
+
+4. 若要远程进入全屏，主机会弹出确认提示，点击屏幕即可授权。
+
+> **提示**：GitHub Pages（HTTPS）无法连接本地 `ws://` 服务，请直接通过服务端的 HTTP 地址访问页面，而非 GitHub Pages。
 
 ## 键盘快捷键
 
